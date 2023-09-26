@@ -30,7 +30,7 @@ $ tar xvfz node-v17.9.1-linux-armv7l.tar.gz
 
 Node will require libatomic.so.1 which isn't shipped with the device, get the .deb file from http://ftp.de.debian.org/debian/pool/main/g/gcc-10-cross/libatomic1-armhf-cross_10.2.1-6cross1_all.deb
 
-##### Installing `libatomic.so.1`
+#### Installing `libatomic.so.1`
 
 ```
 $ ar x libatomic1-armhf-cross_10.2.1-6cross1_all.deb 
@@ -49,4 +49,36 @@ Run it
 $ /home/bticino/cfg/extra/node/bin/node /home/bticino/cfg/extra/c300x-controller/controller.js
 ```
 
+#### Giving yourself write access
 
+```
+$ mount -oremount,rw /
+```
+
+#### Running it at startup
+
+In the file `/etc/init.d/mosquitto` underneath the `start)` section add the line:
+
+```
+nohup /home/bticino/cfg/extra/node/bin/node /home/bticino/cfg/extra/c300x-controller/controller.js > /dev/null 2>&1 &
+```
+
+This will start the controller when mosquitto starts up
+
+#### Turning off the firewall
+
+To be able to access the controller you have to turn off the firewall to access port 8080
+
+To permanently disable it:
+```
+$ mv /etc/network/if-pre-up.d/iptables /home/bticino/cfg/extra/iptables.bak
+$ mv /etc/network/if-pre-up.d/iptables6 /home/bticino/cfg/extra/iptables6.bak
+```
+
+To do it only once (you need to redo this after every startup):
+
+```
+$ iptables -P INPUT ACCEPT
+$ iptables -P FORWARD ACCEPT
+$ iptables -P OUTPUT ACCEPT
+```
