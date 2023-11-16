@@ -1,0 +1,8 @@
+const doorUnlock = {
+  openSequence: 'your-opening-sequence' ,
+  closeSequence: 'your-closing-sequence' ,
+};
+
+module.exports = {
+  doorUnlock ,
+}
