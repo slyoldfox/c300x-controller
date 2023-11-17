@@ -7,6 +7,6 @@ const udpProxy = require('./lib/udp-proxy')
 const EndpointRegistry = require('./lib/endpoint-registry')
 
 const registry = EndpointRegistry.create()
-Api.create(registry)
+const api = Api.create(registry)
 udpProxy.create()
-MulticastListener.create(registry)
+MulticastListener.create(registry, api)
