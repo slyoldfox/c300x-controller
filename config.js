@@ -23,6 +23,8 @@ const mqtt_config = {
     'password': '',
     // MQTT Topic, will resolve to 'topic/eventname'
     'topic': 'bticino',
+    // If retain is true, the message will be retained as a "last known good" value on the broker
+    'retain': false,
     // Path of mosquitto_pub on the intercom
     'exec_path': '/usr/bin/mosquitto_pub'
 }
