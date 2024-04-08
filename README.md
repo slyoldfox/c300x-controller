@@ -4,14 +4,17 @@
 
 Supports:
 
-* Unlocking door
+* Unlocking door (supporting multiple locks)
 * Displaying the unit temp and load
 * Rebooting the unit
 * Register endpoints to receive doorbell pressed, door locked and door unlocked events
+* Enable/disable voice mail and show the status
+* Enable/disable the ringer and show the status
 * Start dropbear sshd (in case it crashes)
 * Validates scrypted setup
 * Exposes the voicemail videoclips
 * Display the videoclip
+* Send MQTT messages for openwebnet events
 
 ### Handlers
 
