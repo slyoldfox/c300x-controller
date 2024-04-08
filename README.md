@@ -14,7 +14,7 @@ Supports:
 * Validates scrypted setup
 * Exposes the voicemail videoclips
 * Display the videoclip
-* Send MQTT messages for openwebnet events
+* Send MQTT messages for openwebnet events and intercom status
 
 ### Handlers
 

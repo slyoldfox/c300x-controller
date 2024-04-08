@@ -15,6 +15,8 @@ const mqtt_config = {
     'enabled': false,
     // Publish all openwebnet events (can be noisy and overload your system?)
     'all_events_enabled': false,
+    'enable_intercom_status': true,
+    'status_polling_interval': 300,
     // Hostname or IP of the external MQTT server
     'host': '',
     'port': 1883,
