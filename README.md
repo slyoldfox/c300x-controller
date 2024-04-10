@@ -125,14 +125,15 @@ Create a new init.d script under `/etc/init.d/c300x-controller` with the followi
 set -e
 
 PIDFILE=/var/run/c300x-controller
-DAEMON="/home/bticino/cfg/extra/node/bin/node /home/bticino/cfg/extra/c300x-controller/controller.js"
+DAEMON="/home/bticino/cfg/extra/node/bin/node"
+DAEMON_ARGS="/home/bticino/cfg/extra/c300x-controller/controller.js"
 
 . /etc/init.d/functions
 
 case "$1" in
     start)
         echo "Starting c300x-controller"
-		if start-stop-daemon --start --quiet --oknodo --background  --make-pidfile --pidfile ${PIDFILE} --exec ${DAEMON} ; then
+		if start-stop-daemon --start --quiet --oknodo --background  --make-pidfile --pidfile ${PIDFILE} --exec ${DAEMON} -- ${DAEMON_ARGS} ; then
 			exit 0
 		fi
         ;;
@@ -151,13 +152,19 @@ case "$1" in
             rm -f ${PIDFILE}
         fi
 	usleep 150000 
-        if start-stop-daemon --start --quiet --oknodo --background --make-pidfile --pidfile ${PIDFILE} --retry=TERM/3/KILL/2 --exec ${DAEMON} ; then
+        if start-stop-daemon --start --quiet --oknodo --background --make-pidfile --pidfile ${PIDFILE} --retry=TERM/3/KILL/2 --exec ${DAEMON} -- ${DAEMON_ARGS} ; then
             exit 0
         fi
         ;;
 
     status)
-        status ${DAEMON} && exit 0 || exit $?
+        #status ${DAEMON} && exit 0 || exit $?
+        pid=`ps -fC node | grep "$DAEMON $DAEMON_ARGS" | awk '{print $2}'`
+        if [ "$pid" != "" ]; then
+                echo "$DAEMON $DAEMON_ARGS (pid $pid) is running..."
+        else
+                echo "$DAEMON $DAEMON_ARGS stopped"
+        fi
         ;;
 
     *)
