@@ -24,7 +24,7 @@ Handlers automatically act on syslog messages it currently supports starting Aud
 
 ### 1. Install `node.js`
 ```
-mount -oremount, rw /
+mount -oremount,rw /
 cd /home/bticino/cfg/extra/
 mkdir node
 wget https://nodejs.org/download/release/latest-v17.x/node-v17.9.1-linux-armv7l.tar.gz
@@ -193,7 +193,7 @@ ln -s ../init.d/c300x-controller S40c300x-controller
 Make the filesystem read-only again
 
 ```
-mount -oremount, ro /
+mount -oremount,ro /
 ```
 
 than reboot the unit and verify that everything is working as expected.
