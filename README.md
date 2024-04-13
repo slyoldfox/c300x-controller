@@ -37,7 +37,7 @@ Or if you rather first fetch the script and read it before executing:
 ```
 wget 'https://raw.githubusercontent.com/slyoldfox/c300x-controller/main/install.sh'
 less install.sh
-./install.sh
+bash install.sh
 ```
 
 ## Manual install
