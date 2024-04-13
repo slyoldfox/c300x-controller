@@ -6,8 +6,8 @@ const doorUnlock = {
 
 const additionalLocks = {
     // Uncomment this if you have extra locks, you can call them with /unlock?id=side-door
-    //"back-door": { openSequence: '*8*19*21##', closeSequence: '*8*19*21##' },
-    //"side-door": { openSequence: '*8*19*22##', closeSequence: '*8*19*22##' }
+    //"back-door": { openSequence: '*8*19*21##', closeSequence: '*8*20*21##' },
+    //"side-door": { openSequence: '*8*19*22##', closeSequence: '*8*20*22##' }
 };
 
 const mqtt_config = {

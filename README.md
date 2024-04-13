@@ -22,6 +22,26 @@ Handlers automatically act on syslog messages it currently supports starting Aud
 
 ## Setup procedure
 
+You can choose between an automated install using a script or a manual install.
+
+## Automated install
+
+You can execute the `install.sh` script which will do all manual steps below for you:
+
+```
+bash -c "$(wget -qO - 'https://raw.githubusercontent.com/slyoldfox/c300x-controller/main/install.sh')"
+```
+
+Or if you rather first fetch the script and read it before executing:
+
+```
+wget 'https://raw.githubusercontent.com/slyoldfox/c300x-controller/main/install.sh'
+less install.sh
+./install.sh
+```
+
+## Manual install
+
 ### 1. Install `node.js`
 ```
 mount -oremount,rw /
