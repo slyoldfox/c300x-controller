@@ -1,0 +1,14 @@
+{
+    "ignoredUnknownValue": {},
+    "doorUnlock": {
+        "openSequence" : "*8*XX*20##"
+    },
+    "additionalLocks": {
+        "back-door": { "openSequence": "*8*19*21##", "closeSequence": "*8*20*21##" },
+        "side-door": { "openSequence": "*8*19*22##", "closeSequence": "*8*20*22##" }
+    },
+    "mqtt_config": {
+        "enabled" : true,
+        "host": "192.168.0.2"
+    }
+}

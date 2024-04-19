@@ -1,5 +1,12 @@
 # c300x-controller: The API that BTicino never had
 
+## Table of Contents
+
+- [API](#api)
+- [Handlers](#handlers)
+- [Setup procedure](#setup-procedure)
+- [Development](#development)
+
 ## API
 
 Supports:
@@ -18,13 +25,14 @@ Supports:
 
 ## Handlers
 
-Handlers automatically act on syslog messages it currently supports starting Audio and Video streams to the registered endpoint when a doorbell event is received.
+Handlers automatically act on syslog messages being sent on the multicast port 7667.
+They are handled by `multicast-listener.js`. At the moment only 1 handler is registered which listens to the `openwebnet` messages.
 
 ## Setup procedure
 
 You can choose between an automated install using a script or a manual install.
 
-## Automated install
+### Automated install
 
 You can execute the `install.sh` script which will do all manual steps below for you:
 
@@ -40,9 +48,9 @@ less install.sh
 bash install.sh
 ```
 
-## Manual install
+### Manual install
 
-### 1. Install `node.js`
+#### 1. Install `node.js`
 ```
 mount -oremount,rw /
 cd /home/bticino/cfg/extra/
@@ -52,7 +60,7 @@ tar xvfz node-v17.9.1-linux-armv7l.tar.gz --strip-components 1 -C ./node
 rm node-v17.9.1-linux-armv7l.tar.gz
 ```
 
-### 2. Install `libatomic.so.1`
+#### 2. Install `libatomic.so.1`
 
 Node will require libatomic.so.1 which isn't shipped with the device, so we need to collect it from another source.
 
@@ -74,7 +82,7 @@ cd /lib
 ln -s libatomic.so.1.2.0 libatomic.so.1
 ```
 
-### 3. Check that `node.js` now works fine
+#### 3. Check that `node.js` now works fine
 
 ```
 /home/bticino/cfg/extra/node/bin/node -v
@@ -84,7 +92,7 @@ should output the version
 v17.9.1
 ```
 
-### 4. Install `c300x-controller`
+#### 4. Install `c300x-controller`
 
 ```
 cd /home/bticino/cfg/extra/
@@ -100,7 +108,7 @@ now do a check run
 /home/bticino/cfg/extra/node/bin/node /home/bticino/cfg/extra/c300x-controller/controller.js
 ```
 
-### 5. Edit firewall rules
+#### 5. Edit firewall rules
 
 To be able to access the c300x-controller from the network, you have to allow incoming connections through the wireless interface to port 8080.
 Edit `/etc/network/if-pre-up.d/iptables` and add the following section at line 38:
@@ -129,7 +137,7 @@ and check that the controller is now reachable at http://<your_device_ip>:8080
 > $ mv /etc/network/if-pre-up.d/iptables6 /home/bticino/cfg/extra/iptables6.bak
 > ```
 
-### 6. Running it at startup
+#### 6. Running it at startup
 
 Create a new init.d script under `/etc/init.d/c300x-controller` with the following content
 ```
@@ -208,7 +216,7 @@ cd /etc/rc5.d/
 ln -s ../init.d/c300x-controller S40c300x-controller
 ```
 
-### 7. Final steps
+#### 7. Final steps
 
 Make the filesystem read-only again
 
@@ -217,3 +225,41 @@ mount -oremount,ro /
 ```
 
 than reboot the unit and verify that everything is working as expected.
+
+## Development
+
+For development, open an ssh connection to you intercom and forward the `openwebnet` port.
+
+```
+ssh -L127.0.0.1:20000:127.0.0.1:20000 root2@192.168.0.XX
+```
+
+If you want to receive openwebnet messages you will need to login to the intercom and forward the syslog packets
+
+You can do this with `socat`, an arm build is avaialable for download here: https://github.com/therealsaumil/static-arm-bins/blob/master/socat-armel-static
+
+```
+ssh -L127.0.0.1:20000:127.0.0.1:20000 root2@192.168.0.XX /home/bticino/cfg/extra/socat-armel-static UDP4-RECVFROM:7667,reuseaddr,fork UDP4-SENDTO:192.168.0.5:7667
+```
+
+Start the controller with
+
+```
+node controller.js
+```
+
+You can create a (production) webpack bundle by executing:
+
+```
+npm run build
+```
+
+You can then run the (production) webpack bundle by executing:
+
+```
+npm start
+```
+
+> [!WARNING]
+> Note that some APIs might not work locally (e.g. reboot api, load) - because they use native commands on the intercom.
+>

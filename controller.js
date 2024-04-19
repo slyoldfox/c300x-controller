@@ -1,6 +1,9 @@
-"use strict";
+#!/usr/bin/env node
 
-console.log("======= for use with BTicino plugin 0.0.15 =======")
+"use strict";
+var package_json = require('./package.json');
+
+console.log(`======= c300x-controller ${package_json.version} for use with BTicino plugin 0.0.15 =======`)
 const Api = require('./lib/api')
 const MulticastListener = require("./lib/multicast-listener");
 const udpProxy = require('./lib/udp-proxy')
