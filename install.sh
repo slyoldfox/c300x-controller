@@ -83,16 +83,17 @@ test_node() {
 
 fetch_controller() {
     echo "Downloading c300x-controller ..."
-    /usr/bin/wget -c -O /tmp/main.tar.gz https://github.com/slyoldfox/c300x-controller/archive/refs/heads/main.tar.gz
     /bin/mkdir $CONTROLLER_DIR
-    /bin/tar xfz /tmp/main.tar.gz --strip-components 1 -C $CONTROLLER_DIR
+    /usr/bin/wget -c -O $CONTROLLER_DIR/bundle.js https://github.com/slyoldfox/c300x-controller/releases/latest/download/bundle.js
+    #/usr/bin/wget -c -O /tmp/main.tar.gz https://github.com/slyoldfox/c300x-controller/archive/refs/heads/main.tar.gz
+    #/bin/tar xfz /tmp/main.tar.gz --strip-components 1 -C $CONTROLLER_DIR
 }
 
 install_controller() {
     echo ""
     if test -d $CONTROLLER_DIR; then
       while true; do
-        read -p "Directory $CONTROLLER_DIR already exists, overwrite? (yn) " yn
+        read -p "Directory $CONTROLLER_DIR already exists, overwrite? You will NOT loose your config.json. (yn) " yn
         case $yn in
            [Yy]* ) echo -n "*** Removing directory..."; /bin/rm -rf $CONTROLLER_DIR; echo "DONE"; fetch_controller; break;;
            [Nn]* ) break;;
@@ -186,7 +187,7 @@ set -e
 
 PIDFILE=/var/run/c300x-controller
 DAEMON="/home/bticino/cfg/extra/node/bin/node"
-DAEMON_ARGS="/home/bticino/cfg/extra/c300x-controller/controller.js"
+DAEMON_ARGS="/home/bticino/cfg/extra/c300x-controller/bundle.js"
 
 . /etc/init.d/functions
 
