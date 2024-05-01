@@ -6,6 +6,13 @@
 const fs = require("fs")
 const path = require('path')
 
+const global = {
+    // EXPERIMENTAL: It seems that sometimes the C100X cannot enable the streams through openwebnet commands
+    // We can use UDP proxies instead to forward the RTP packets
+    'useUdpProxies': false,
+    // Use the higher resolution video stream
+    'highResVideo': true
+}
 const doorUnlock = {
     // Default behaviour is device ID 20, if you need more, add them to additionalLocks in config.json
     openSequence: '*8*19*20##' ,
@@ -44,7 +51,7 @@ const configPaths = [configPath, cwdConfigPath, extraConfigPath]
 
 function overrideAndPrintValue( name, base, overridden ) {
     for(const key in overridden) {
-        if( overridden[key] ) {
+        if( overridden[key] != undefined ) {
             console.log( name + "." + key + ": " + JSON.stringify(  base[key], null, 2) + " -> " + JSON.stringify( overridden[key], null, 2 ))
             base[key] = overridden[key]
         }
@@ -62,7 +69,7 @@ if( detectedPath ) {
     console.log(`FOUND config.json file at '${detectedPath}' and overriding the values from it.`)
     console.log("")
     const config = JSON.parse( fs.readFileSync(detectedPath) )
-
+    overrideAndPrintValue( "global", global, config.global)
     overrideAndPrintValue( "doorUnlock", doorUnlock, config.doorUnlock)
     overrideAndPrintValue( "additionalLocks", additionalLocks, config.additionalLocks)
     overrideAndPrintValue( "mqtt_config", mqtt_config, config.mqtt_config)
@@ -71,9 +78,9 @@ if( detectedPath ) {
     console.log(`NO config.json file found in paths '${configPaths}', using built-in defaults.`)
 }
 console.log("============================== final config =====================================")
-console.log(JSON.stringify( { doorUnlock, additionalLocks, mqtt_config }, null, 2 ) )
+console.log(JSON.stringify( { global, doorUnlock, additionalLocks, mqtt_config }, null, 2 ) )
 console.log("=================================================================================")
 
 module.exports = {
-    doorUnlock, additionalLocks, mqtt_config
+    doorUnlock, additionalLocks, mqtt_config, global
 }

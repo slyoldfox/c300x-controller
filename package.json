@@ -7,8 +7,9 @@
   "main": "dist/bundle.js",
   "bin": "./dist/bundle.js",
   "scripts": {
-    "builddev": "./node_modules/.bin/webpack",
-    "build": "./node_modules/.bin/webpack --mode production",
+    "build:prod": "webpack --mode production",
+    "build:dev": "webpack --mode development",
+    "build": "npm run build:dev && npm run build:prod",
     "start": "node dist/bundle.js"
   },
   "devDependencies": {

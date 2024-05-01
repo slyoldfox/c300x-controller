@@ -12,5 +12,5 @@ const mqtt = require('./lib/mqtt')
 
 const registry = EndpointRegistry.create()
 const api = Api.create(registry)
-udpProxy.create()
+udpProxy.create( 40004, '0.0.0.0', 4000, '127.0.0.1' )
 MulticastListener.create(registry, api, mqtt.create(api))
