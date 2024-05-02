@@ -45,12 +45,28 @@ simlink? () {
   test "$(readlink "${1}")";
 }
 
+download_file() {
+    if [ "${1}" != "" -a "${2}" != "" ]; then
+        if [ "$(type -p basename)" != "" ]; then
+            echo "*** Downloading $(basename ${2}) ..."
+        else
+            echo "*** Downloading ${2} ..."
+        fi
+        if [ "$(type -p curl)" != "" ]; then
+            "$(type -p curl)" -L -o "${2}" "${1}"
+        elif [ "$(type -p wget)" != "" ]; then
+            "$(type -p wget)" -c -O "${2}" "${1}"
+        else
+            echo "!!! Cannot find any program for file downloading"
+        fi
+    fi
+}
+
 trap cleanup HUP PIPE INT QUIT TERM EXIT
 
 install_node() {
-    echo "*** Downloading node-v17.9.1-linux-armv7l.tar.gz ..."
-    /usr/bin/wget -c -O /tmp/node-v17.9.1-linux-armv7l.tar.gz https://nodejs.org/download/release/latest-v17.x/node-v17.9.1-linux-armv7l.tar.gz
-    /bin/mkdir $NODE_DIR
+    download_file https://nodejs.org/download/release/latest-v17.x/node-v17.9.1-linux-armv7l.tar.gz /tmp/node-v17.9.1-linux-armv7l.tar.gz
+    /bin/mkdir -p $NODE_DIR
     echo -n "*** Extracting node-v17.9.1-linux-armv7l.tar.gz ..."
     /bin/tar xfz /tmp/node-v17.9.1-linux-armv7l.tar.gz --strip-components 1 -C $NODE_DIR
     echo "DONE"
@@ -61,9 +77,8 @@ install_libatomic() {
     if test -f /lib/libatomic.so.1.2.0; then
 	echo "*** /lib/libatomic.so.1.2.0 already exists, skipping install"
     else
-        echo "*** Getting libatomic.so file"
 	require_write
-        /usr/bin/wget -c -O /lib/libatomic.so.1.2.0 https://github.com/slyoldfox/c300x-controller/raw/main/libatomic.so.1.2.0
+        download_file https://github.com/slyoldfox/c300x-controller/raw/main/libatomic.so.1.2.0 /lib/libatomic.so.1.2.0
         echo ""
     fi
     if simlink? "/lib/libatomic.so.1"; then
@@ -83,10 +98,8 @@ test_node() {
 
 fetch_controller() {
     echo "Downloading c300x-controller ..."
-    /bin/mkdir $CONTROLLER_DIR
-    /usr/bin/wget -c -O $CONTROLLER_DIR/bundle.js https://github.com/slyoldfox/c300x-controller/releases/latest/download/bundle.js
-    #/usr/bin/wget -c -O /tmp/main.tar.gz https://github.com/slyoldfox/c300x-controller/archive/refs/heads/main.tar.gz
-    #/bin/tar xfz /tmp/main.tar.gz --strip-components 1 -C $CONTROLLER_DIR
+    /bin/mkdir -p $CONTROLLER_DIR
+    download_file https://github.com/slyoldfox/c300x-controller/releases/latest/download/bundle.js "$CONTROLLER_DIR/bundle.js"
 }
 
 install_controller() {
@@ -249,8 +262,8 @@ EOF
     fi
 
     /etc/init.d/c300x-controller restart
-    sleep 2
-    /usr/bin/wget -s "http://127.0.0.1:8080/load"
+    sleep 5
+    /usr/bin/wget --spider "http://127.0.0.1:8080/load"
     if [ $? -eq 0 ]; then
         echo ""
 	echo "*** c300x-controller is running on http port 8080, have fun :)"
