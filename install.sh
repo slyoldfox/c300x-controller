@@ -34,6 +34,7 @@ cleanup() {
     	echo "*** Cleaning up"
     	/bin/rm -rf /tmp/node-v17.9.1-linux-armv7l.tar.gz
     	/bin/rm -rf /tmp/main.tar.gz
+    	/bin/rm -rf /tmp/config.json
     	#sometimes fails with 'mount point busy'
     	#/bin/mount -oremount,ro /
 	CLEANUP=1
@@ -106,9 +107,24 @@ install_controller() {
     echo ""
     if test -d $CONTROLLER_DIR; then
       while true; do
-        read -p "Directory $CONTROLLER_DIR already exists, overwrite? You will NOT loose your config.json. (yn) " yn
+        read -p "Directory $CONTROLLER_DIR already exists, overwrite? You will NOT lose your config.json. (yn) " yn
         case $yn in
-           [Yy]* ) echo -n "*** Removing directory..."; /bin/rm -rf $CONTROLLER_DIR; echo "DONE"; fetch_controller; break;;
+           [Yy]* )
+               [ ! -r "${CONTROLLER_DIR}/config.json" ] || {
+                   echo -n "*** Backing up config.json..."
+                   /bin/cp -p "${CONTROLLER_DIR}/config.json" "/tmp/config.json"
+                   echo "DONE"
+               }
+               echo -n "*** Removing directory..."
+               /bin/rm -rf $CONTROLLER_DIR
+               echo "DONE"
+               fetch_controller
+               [ ! -r "/tmp/config.json" ] || {
+                   echo -n "*** Restoring config.json..."
+                   /bin/cp -p "/tmp/config.json" "${CONTROLLER_DIR}/config.json"
+                   echo "DONE"
+               }
+               break;;
            [Nn]* ) break;;
            * ) echo "Please answer yes or no.";;
        esac
