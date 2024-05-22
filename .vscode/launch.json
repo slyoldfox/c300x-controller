@@ -6,12 +6,13 @@
     "configurations": [
         {
             "type": "node",
+            "runtimeVersion": "17.9.1",
             "request": "launch",
             "name": "Launch Program",
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}/controller.js"
+            "program": "${workspaceFolder}/controller-homekit.js"
         }
     ]
 }
