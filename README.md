@@ -5,7 +5,10 @@
 - [API](#api)
 - [Handlers](#handlers)
 - [Setup procedure](#setup-procedure)
+- [WebRTC](#webrtc)
+- [Homekit](#homekit)
 - [Development](#development)
+
 
 ## API
 
@@ -22,6 +25,7 @@ Supports:
 * Exposes the voicemail videoclips
 * Display the videoclip
 * Send MQTT messages for openwebnet events and intercom status
+* WebRTC bundle with embedded SIP client and SDP socket server
 
 ## Handlers
 
@@ -225,6 +229,105 @@ mount -oremount,ro /
 ```
 
 than reboot the unit and verify that everything is working as expected.
+
+## WebRTC
+
+Since version 2024.5.1 - you can choose between `bundle.js`, `bundle-webrtc.js` or `bundle-homekit.js`.
+
+To use `WebRTC`,  use the `bundle-webrtc.js` file instead of the `bundle.js`.
+
+In config.json add the following config:
+
+```
+    "sip" : {
+        "from": "webrtc@127.0.0.1",
+        "to": "c300x@192.168.0.20",
+        "domain": "XXXXXXX.bs.iotleg.com",
+        "debug": false
+    }
+```
+
+Add the `webrtc` to the linphone files if you wish to receive incoming calls.
+
+When starting the WebRTC bundle, an additional SDP server will be available at `tcp://192.168.0.X:8081`.
+
+This allows you to use `ffplay -f sdp -i tcp://192.168.0.XX:8081` or `ffmpeg -f sdp -i tcp://192.168.XX:8081` to setup the underlying SIP call and view the camera.
+
+You can use the Home Assistant add-on or integration at https://github.com/AlexxIT/WebRTC to add a WebRTC card to your dashboard.
+
+The Home Assistant add-on or integration has the ability to run https://github.com/AlexxIT/go2rtc as an embedded process on your HA instance (or as a standalone process).
+
+You can add a stream to the Bticino intercom by specifying the following `go2rtc.yaml`
+
+```
+streams:
+  doorbell:
+    - "ffmpeg:tcp://192.168.0.XX:8081#video=copy#audio=pcma"    
+    - "exec:ffmpeg -re -fflags nobuffer -f alaw -ar 8000 -i - -ar 8000 -acodec speex -f rtp -payload_type 97 rtp://192.168.0.XX:40004#backchannel=1"
+```
+
+The `ffmpeg:tcp://192.168.0.XX:8081#video=copy#audio=pcma"` line talks to the SDP server inside the c300-controller and will setup a SIP call in the background.
+
+The options `#video=copy#audio=pcma` tell go2rtc to copy the `h264` and transcode the audio (from `speex`) to `pcma`
+
+The `exec:ffmpeg ...` line specifies the `backchannel`. This is the stream from your (browser) microphone towards the intercom.
+It will read the microphone data from the websocket and transcode it to `speex` and send it the intercom using `rtp`. The port `40004` is the port of the UDP proxy inside the c300-controller.
+
+The WebRTC card configuration looks like this:
+
+```
+type: custom:webrtc-camera
+url: doorbell
+mode: webrtc
+media: video,audio,microphone
+```
+
+To use the microphone you must make sure that your Home Assistant instance is running on `https://`. The microphone does not activate on `http://`, this is a browser security measure.
+
+If you managed to get this working on your local network, you will still need to fix something to make sure you can reach the stream from the internet.
+
+Have a look at https://github.com/AlexxIT/go2rtc?tab=readme-ov-file#module-webrtc for this.
+
+In my case I forwarded port `8555` to my internal go2rtc instance and specified my IP in the `candidates` section in `go2rtc.yaml`
+
+```
+webrtc:
+  candidates:
+    - 216.58.210.174:8555  # if you have static public IP-address
+```
+_BONUS:_
+
+If you don't wish to run the `go2rtc` embedded process in HA, you can run it natively on your intercom:
+
+Fetch the binaries for go2rtc and ffmpeg:
+`https://github.com/AlexxIT/go2rtc/releases/latest/download/go2rtc_linux_arm`
+`https://johnvansickle.com/ffmpeg/` (*armhf* version)
+
+Adjust the paths to where your ffmpeg binary is and adjust your port forwards.
+
+```
+ffmpeg:
+  bin: /home/bticino/cfg/extra/ffmpeg-linux-arm  # path to ffmpeg binary
+```
+Replace the IP above with *127.0.0.1* and all transcoding and handling is now on your intercom.
+
+Inside HA add the Webrtc with `http://192.168.0.XX:1984` (replace with the IP of your intercom).
+
+## Homekit
+
+Since version 2024.5.1 - you can choose between `bundle.js`, `bundle-webrtc.js` or `bundle-homekit.js`.
+
+***WARNING:*** Homekit support is experimental, work in progress and highly untested.
+
+To use `Homekit`,  use the `bundle-homekit.js` file instead of the `bundle.js`. This will expose a Homekit bridge.
+
+The PIN code to pair is shown in the console or in the file `config-homekit.json` after startup.
+
+At the moment the Bridge exposes:
+
+* All locks
+* Mute/unmute switch
+* Voicemail switch (C300X only)
 
 ## Development
 

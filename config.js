@@ -6,6 +6,8 @@
 const fs = require("fs")
 const path = require('path')
 
+const version = require('./package.json').version;
+
 const global = {
     // EXPERIMENTAL: It seems that sometimes the C100X cannot enable the streams through openwebnet commands
     // We can use UDP proxies instead to forward the RTP packets
@@ -42,6 +44,14 @@ const mqtt_config = {
     'exec_path': '/usr/bin/mosquitto_pub'
 }
 
+const sip = {
+    'from': undefined,
+    'to': undefined,
+    'domain': undefined,
+    'debug': false,
+    'expire': 300
+}
+
 const configFile = './config.json';
 
 const configPath = path.join(__dirname, configFile);
@@ -51,7 +61,7 @@ const configPaths = [configPath, cwdConfigPath, extraConfigPath]
 
 function overrideAndPrintValue( name, base, overridden ) {
     for(const key in overridden) {
-        if( overridden[key] != undefined ) {
+        if( overridden[key] != undefined && base[key] !== overridden[key] ) {
             console.log( name + "." + key + ": " + JSON.stringify(  base[key], null, 2) + " -> " + JSON.stringify( overridden[key], null, 2 ))
             base[key] = overridden[key]
         }
@@ -73,14 +83,15 @@ if( detectedPath ) {
     overrideAndPrintValue( "doorUnlock", doorUnlock, config.doorUnlock)
     overrideAndPrintValue( "additionalLocks", additionalLocks, config.additionalLocks)
     overrideAndPrintValue( "mqtt_config", mqtt_config, config.mqtt_config)
+    overrideAndPrintValue( "sip", sip, config.sip)
     console.log("")
 } else {
     console.log(`NO config.json file found in paths '${configPaths}', using built-in defaults.`)
 }
 console.log("============================== final config =====================================")
-console.log(JSON.stringify( { global, doorUnlock, additionalLocks, mqtt_config }, null, 2 ) )
+console.log('\x1b[33m'+JSON.stringify( { global, doorUnlock, additionalLocks, mqtt_config, sip }, null, 2 ) +'\x1b[0m' )
 console.log("=================================================================================")
 
 module.exports = {
-    doorUnlock, additionalLocks, mqtt_config, global
+    doorUnlock, additionalLocks, mqtt_config, global, sip, version
 }
