@@ -98,9 +98,18 @@ test_node() {
 }
 
 fetch_controller() {
-    echo "Downloading c300x-controller ..."
+    while true; do
+	read -p "Select controller variant: 1 > Standard, 2 > WebRTC , 3 > HomeKit " variant
+	case $variant in
+	   1 ) VARIANT_SUFFIX=""; break;;
+	   2 ) VARIANT_SUFFIX="-webrtc"; break;;
+	   3 ) VARIANT_SUFFIX="-homekit"; break;;
+	   * ) echo "Please select 1, 2 or 3.";;
+	esac
+    done
+    echo "Downloading c300x-controller${VARIANT_SUFFIX} ..."
     /bin/mkdir -p $CONTROLLER_DIR
-    download_file https://github.com/slyoldfox/c300x-controller/releases/latest/download/bundle.js "$CONTROLLER_DIR/bundle.js"
+    download_file "https://github.com/slyoldfox/c300x-controller/releases/latest/download/bundle${VARIANT_SUFFIX}.js" "$CONTROLLER_DIR/bundle.js"
 }
 
 install_controller() {
