@@ -1,6 +1,6 @@
 {
   "name": "c300x-controller",
-  "version": "2024.4.2",
+  "version": "2024.5.1",
   "files": [
     "dist/**"
   ],
@@ -12,7 +12,7 @@
     "build:sipbundle:dev": "webpack -c bundles/sip-bundle-webpack.config.js --mode development",
     "build:sipbundle:prod": "webpack -c bundles/sip-bundle-webpack.config.js --mode production",
     "build:homekitbundle:dev": "webpack -c bundles/homekit-bundle-webpack.config.js --mode development",
-    "build:homekitbundle:prod": "webpack -c bundles/homekit-bundle-webpack.config.js --mode production",    
+    "build:homekitbundle:prod": "webpack -c bundles/homekit-bundle-webpack.config.js --mode production",
     "build": "npm run build:dev && npm run build:prod",
     "start": "node dist/bundle.js"
   },
@@ -28,6 +28,6 @@
     "webpack": "^5.91.0",
     "webpack-cli": "^5.1.4",
     "webpack-shebang-plugin": "^1.1.8"
-  },  
+  },
   "license": "ISC"
 }
