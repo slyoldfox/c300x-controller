@@ -99,7 +99,7 @@ test_node() {
 
 fetch_controller() {
     while true; do
-	read -p "Select controller variant: 1 > Standard, 2 > WebRTC , 3 > HomeKit " variant
+	read -p "Select controller variant: 1 > Standard, 2 > WebRTC , 3 > HomeKit. (123) " variant
 	case $variant in
 	   1 ) VARIANT_SUFFIX=""; break;;
 	   2 ) VARIANT_SUFFIX="-webrtc"; break;;
