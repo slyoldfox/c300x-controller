@@ -86,8 +86,6 @@ homekitManager.addSwitch('Muted' )
         } )
 } )
 
-const env = process.env
-
 if( model !== 'C100X' ) {
     homekitManager.addSwitch('Voicemail')
         .switchedOn( () => { openwebnet.run("aswmEnable") } )
