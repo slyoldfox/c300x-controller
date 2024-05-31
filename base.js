@@ -11,8 +11,10 @@ const mqtt = require('./lib/mqtt')
 const registry = EndpointRegistry.create()
 const api = Api.create(registry)
 udpProxy.create( 40004, '0.0.0.0', 4000, '127.0.0.1' )
-const multicastListener = MulticastListener.create(registry, api, mqtt.create(api))
+const eventbus = require('./lib/eventbus').create()
+const multicastListener = MulticastListener.create(registry, api, mqtt.create(api), eventbus)
 
 module.exports = {
-    'registry': registry
+    'registry': registry,
+    'eventbus': eventbus
 }

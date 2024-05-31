@@ -18,6 +18,7 @@ class JSONStore {
             this.data = JSON.parse(data);
         } catch (err) {
             console.error('Error loading data:', err);
+            throw err
         }
     }
 
@@ -30,8 +31,13 @@ class JSONStore {
         }
     }
 
-    read(key) {
-        return this.data[key];
+    read(key, defaults) {
+        let data = this.data[key];
+        if( !data ) {
+            data = defaults()
+            this.write(key, data)
+        }
+        return data
     }
 
     write(key, value) {

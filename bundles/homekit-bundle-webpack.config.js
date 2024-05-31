@@ -11,6 +11,9 @@ const TerserPlugin = require('terser-webpack-plugin')
 module.exports = [
     (env, argv) => {
         return {
+            resolve: {
+                extensions: ['.ts', '.js', '.json']
+            },
             devtool: 'source-map',
             mode: 'production',
             entry: [ __dirname + '/homekit-manager.ts'],
