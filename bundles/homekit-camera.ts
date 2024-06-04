@@ -179,7 +179,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
           ' -hide_banner' +
           ' -loglevel error';
   
-        this.log.debug('Snapshot command: ' + this.videoProcessor + ' ' + ffmpegArgs, this.cameraName, this.videoConfig.debug);
+        //this.log.debug('Snapshot command: ' + this.videoProcessor + ' ' + ffmpegArgs, this.cameraName, this.videoConfig.debug);
         const ffmpeg = spawn(this.videoProcessor, ffmpegArgs.split(/\s+/), { env: process.env });
   
         let snapshotBuffer = Buffer.alloc(0);
@@ -210,7 +210,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
           const runtime = (Date.now() - startTime) / 1000;
           let message = 'Fetching snapshot took ' + runtime + ' seconds.';
           if (runtime < 5) {
-            this.log.debug(message, this.cameraName, this.videoConfig.debug);
+            //this.log.debug(message, this.cameraName, this.videoConfig.debug);
           } else {
             if (!this.unbridge) {
               message += ' It is highly recommended you switch to unbridge mode.';
@@ -234,7 +234,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
           (resizeFilter ? ' -filter:v ' + resizeFilter : '') +
           ' -f image2 -';
   
-        this.log.debug('Resize command: ' + this.videoProcessor + ' ' + ffmpegArgs, this.cameraName, this.videoConfig.debug);
+        //this.log.debug('Resize command: ' + this.videoProcessor + ' ' + ffmpegArgs, this.cameraName, this.videoConfig.debug);
         const ffmpeg = spawn(this.videoProcessor, ffmpegArgs.split(/\s+/), { env: process.env });
   
         let resizeBuffer = Buffer.alloc(0);
@@ -257,14 +257,14 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       try {
         const cachedSnapshot = !!this.snapshotPromise;
   
-        this.log.debug('Snapshot requested: ' + request.width + ' x ' + request.height,
-          this.cameraName, this.videoConfig.debug);
+        //this.log.debug('Snapshot requested: ' + request.width + ' x ' + request.height,
+        //  this.cameraName, this.videoConfig.debug);
   
         const snapshot = await (this.snapshotPromise || this.fetchSnapshot(resolution.snapFilter));
   
-        this.log.debug('Sending snapshot: ' + (resolution.width > 0 ? resolution.width : 'native') + ' x ' +
-          (resolution.height > 0 ? resolution.height : 'native') +
-          (cachedSnapshot ? ' (cached)' : ''), this.cameraName, this.videoConfig.debug);
+        //this.log.debug('Sending snapshot: ' + (resolution.width > 0 ? resolution.width : 'native') + ' x ' +
+        //  (resolution.height > 0 ? resolution.height : 'native') +
+        //  (cachedSnapshot ? ' (cached)' : ''), this.cameraName, this.videoConfig.debug);
   
         const resized = await this.resizeSnapshot(snapshot, resolution.resizeFilter);
         callback(undefined, resized);

@@ -49,7 +49,8 @@ const sip = {
     'to': undefined,
     'domain': undefined,
     'debug': false,
-    'expire': 300
+    'expire': 300,
+    'devaddr': 20
 }
 
 const configFile = './config.json';

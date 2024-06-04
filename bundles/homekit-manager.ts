@@ -186,6 +186,7 @@ export class HomekitManager {
         accessory.configureController(streamingDelegate.controller);
 
         this.eventbus.on('homekit:pressed', () => {
+            console.log("HOMEKIT PRESSED EVENT")
             const doorbellService = accessory.getService(Service.Doorbell);
             doorbellService.getCharacteristic(Characteristic.ProgrammableSwitchEvent).updateValue(Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS);  
         })

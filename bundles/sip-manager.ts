@@ -82,6 +82,7 @@ export interface SipOptions {
   from: string
   domain?: string
   expire?: number
+  devaddr: string
   localIp: string
   localPort: number
   debugSip?: boolean
@@ -532,9 +533,9 @@ export class SipManager {
 
       return parseRtpDescription(this.console, incomingCallRequest)
     } else {
-      if( this.sipOptions.to.toLocaleLowerCase().indexOf('c300x') >= 0 ) {
+      if( this.sipOptions.to.toLocaleLowerCase().indexOf('c300x') >= 0 || this.sipOptions.to.toLocaleLowerCase().indexOf('c100x') >= 0 ) {
         // Needed for bt_answering_machine (bticino specific)
-        audio.unshift('a=DEVADDR:20')
+        audio.unshift('a=DEVADDR:' + this.sipOptions.devaddr)
       }
       let inviteResponse = await this.request({
         method: 'INVITE',

@@ -18,6 +18,7 @@ const model = utils.model().toLocaleUpperCase()
 sdpserver.create(base.registry)
 
 utils.fixMulticast()
+utils.verifyFlexisip('webrtc@' + utils.domain()).forEach( (e) => console.error(e) )
 
 const bridgeConfig = filestore.read('_bridge', () => {
     return {
@@ -44,7 +45,7 @@ const videoConfig = filestore.read('videoConfig', () => {
 const homekitManager = new homekitBundle.HomekitManager( base.eventbus, BASE_PATH, bridgeConfig, videoConfig, config.version, model, videoConfig)
 
 base.eventbus.on('doorbell:pressed', () => {
-    //console.log('doorbell:pressed')
+    console.log('doorbell:pressed')
     base.eventbus.emit('homekit:pressed')
 })     
 
