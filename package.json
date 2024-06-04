@@ -1,6 +1,6 @@
 {
   "name": "c300x-controller",
-  "version": "2024.6.3",
+  "version": "2024.6.4-b0",
   "files": [
     "dist/**"
   ],
