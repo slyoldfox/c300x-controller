@@ -27,6 +27,7 @@ export type VideoConfig = {
   debug?: boolean;
   debugReturn?: boolean;
   videoProcessor?: string;
+  $internalVideoProcessor: string;
   username?: string;
   pinCode: string;
   displayName: string;
@@ -78,15 +79,14 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     ongoingSessions: Map<string, ActiveSession> = new Map();
     timeouts: Map<string, NodeJS.Timeout> = new Map();
   
-    constructor(videoConfig: VideoConfig, cameraName: string) { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
+    constructor(videoConfig: VideoConfig) { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
 
       this.log = new Logger();
   
-      this.cameraName = cameraName;
+      this.cameraName = videoConfig.displayName;
       this.unbridge = true;
       this.videoConfig = videoConfig!;
-      this.videoProcessor = videoConfig.videoProcessor || 'ffmpeg';
-
+      this.videoProcessor = videoConfig.videoProcessor || videoConfig.$internalVideoProcessor;
   
       const options: CameraControllerOptions & DoorbellOptions = {
         cameraStreamCount: this.videoConfig.maxStreams || 2, // HomeKit requires at least 2 streams, but 1 is also just fine

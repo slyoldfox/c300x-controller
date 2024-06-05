@@ -1,5 +1,9 @@
 const fs = require('fs');
 
+function replacer(key, value) {
+    if(key[0] !== '$' ) return value
+}
+
 class JSONStore {
     constructor(filePath) {
         this.filePath = filePath;
@@ -24,7 +28,7 @@ class JSONStore {
 
     save() {
         try {
-            const data = JSON.stringify(this.data, null, 2);
+            const data = JSON.stringify(this.data, replacer, 2);
             fs.writeFileSync(this.filePath, data);
         } catch (err) {
             console.error('Error saving data:', err);

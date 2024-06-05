@@ -157,7 +157,9 @@ export class HomekitManager {
 
     constructor( private eventbus : EventBus, base_path : string, config, videoConfig: VideoConfig, buildNumber : string, model : string) {
         HAPStorage.setCustomStoragePath( base_path + "/storage")
-        videoConfig.videoProcessor = videoConfig.videoProcessor || fetchFffmpeg(base_path)
+        if( !videoConfig.videoProcessor ) {
+            videoConfig.$internalVideoProcessor = fetchFffmpeg(base_path)
+        }
         MODEL = model
         BUILDNUMBER = buildNumber
         this.bridge = new Bridge(config.displayName, uuid.generate('hap-nodejs:bridges:homebridge'));
@@ -177,7 +179,7 @@ export class HomekitManager {
         const accessory = new Accessory(videoConfig.displayName, uuid.generate('hap-nodejs:accessories:doorbell:' + videoConfig.displayName));
         setAccessoryInformation(accessory)
 
-        const streamingDelegate = new StreamingDelegate(videoConfig, videoConfig.displayName)
+        const streamingDelegate = new StreamingDelegate(videoConfig)
         //TODO: HKSV
         //const recordingDelegate = new RecordingDelegate()
 
