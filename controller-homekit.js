@@ -18,7 +18,7 @@ const model = utils.model().toLocaleUpperCase()
 sdpserver.create(base.registry)
 
 utils.fixMulticast()
-utils.verifyFlexisip('webrtc@' + utils.domain()).forEach( (e) => console.error(e) )
+utils.verifyFlexisip('webrtc@' + utils.domain()).forEach( (e) => console.error( `* ${e}`) )
 
 const bridgeConfig = filestore.read('_bridge', () => {
     return {
