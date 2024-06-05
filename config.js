@@ -5,15 +5,17 @@
 
 const fs = require("fs")
 const path = require('path')
+const utils = require('./lib/utils')
 
 const version = require('./package.json').version;
+const model = utils.model()
 
 const global = {
     // EXPERIMENTAL: It seems that sometimes the C100X cannot enable the streams through openwebnet commands
     // We can use UDP proxies instead to forward the RTP packets
     'useUdpProxies': false,
     // Use the higher resolution video stream
-    'highResVideo': true
+    'highResVideo': model === 'c100x' ? false : true
 }
 const doorUnlock = {
     // Default behaviour is device ID 20, if you need more, add them to additionalLocks in config.json
@@ -89,6 +91,13 @@ if( detectedPath ) {
 } else {
     console.log(`NO config.json file found in paths '${configPaths}', using built-in defaults.`)
 }
+
+if( global.highResVideo && utils.model() === 'c100x' ) {
+    // If a c100x does force highResVideo, flip it back off since it doesn't support it.
+    console.info("!!! Forcing highResVideo back to false on c100x")
+    global.highResVideo = false
+}
+
 console.log("============================== final config =====================================")
 console.log('\x1b[33m'+JSON.stringify( { global, doorUnlock, additionalLocks, mqtt_config, sip }, null, 2 ) +'\x1b[0m' )
 console.log("=================================================================================")
