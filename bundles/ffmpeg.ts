@@ -76,13 +76,18 @@ function checkAndFixPermissions(ffmpeg) {
 
 function checkCorrupted(ffmpeg) {
   try {
-    const response = child_process.execSync(ffmpeg + " -version").toString()
-    console.log( "[FFMPEG] valid binary file.")
-  } catch(e) {
+    const stat = fs.statSync(ffmpeg)
+    if(stat.size == 0) {
+       fs.rmSync(ffmpeg)  
+    } else {
+      const response = child_process.execSync(ffmpeg + " -version").toString()
+      console.log( `[FFMPEG] valid binary file at: ${ffmpeg}`)
+    } 
+  }
+  catch(e) {
     console.error("[FFMPEG] binary file corrupt? Removing it. Error: " + e)
     fs.rmSync(ffmpeg)
-    
-  }
+  }  
 }
 
 export function fetchFffmpeg(pathName) {

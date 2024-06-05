@@ -153,7 +153,7 @@ install_controller() {
                    /bin/cp -p "/tmp/config-homekit.json" "${CONTROLLER_DIR}/config-homekit.json"
                    echo "DONE"
                }
-               [ ! -r "/tmp/ffmpeg.json" ] || {
+               [ ! -r "/tmp/ffmpeg" ] || {
                    echo -n "*** Restoring ffmpeg..."
                    /bin/cp -p "/tmp/ffmpeg" "${CONTROLLER_DIR}/ffmpeg"
                    echo "DONE"
