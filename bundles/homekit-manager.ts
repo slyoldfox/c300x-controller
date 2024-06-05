@@ -170,9 +170,7 @@ export class HomekitManager {
             category: Categories.BRIDGE,
             addIdentifyingMaterial: false
         });  
-        this.bridge._server.on('listening', (port) => {
-            console.log('Bridge is bound to port:', port);
-        });
+
         this.addDoorbell(videoConfig)
     }
     addDoorbell(videoConfig: VideoConfig) {

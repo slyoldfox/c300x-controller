@@ -116,7 +116,7 @@ install_controller() {
     echo ""
     if test -d $CONTROLLER_DIR; then
       while true; do
-        read -p "Directory $CONTROLLER_DIR already exists, overwrite? You will NOT lose your config.json. (yn) " yn
+        read -p "Directory $CONTROLLER_DIR already exists, overwrite? You will NOT lose your configuration. (yn) " yn
         case $yn in
            [Yy]* )
                [ ! -r "${CONTROLLER_DIR}/config.json" ] || {
@@ -124,6 +124,21 @@ install_controller() {
                    /bin/cp -p "${CONTROLLER_DIR}/config.json" "/tmp/config.json"
                    echo "DONE"
                }
+               [ ! -r "${CONTROLLER_DIR}/config-homekit.json" ] || {
+                   echo -n "*** Backing up config-homekit.json..."
+                   /bin/cp -p "${CONTROLLER_DIR}/config-homekit.json" "/tmp/config-homekit.json"
+                   echo "DONE"
+               }
+               [ ! -r "${CONTROLLER_DIR}/ffmpeg" ] || {
+                   echo -n "*** Backing up ffmpeg.."
+                   /bin/cp -p "${CONTROLLER_DIR}/ffmpeg" "/tmp/ffmpeg"
+                   echo "DONE"
+               }     
+               [ ! -r "${CONTROLLER_DIR}/storage" ] || {
+                   echo -n "*** Backing up storage dir..."
+                   /bin/cp -p -r "${CONTROLLER_DIR}/storage" "/tmp/storage"
+                   echo "DONE"
+               }                                        
                echo -n "*** Removing directory..."
                /bin/rm -rf $CONTROLLER_DIR
                echo "DONE"
@@ -133,6 +148,22 @@ install_controller() {
                    /bin/cp -p "/tmp/config.json" "${CONTROLLER_DIR}/config.json"
                    echo "DONE"
                }
+               [ ! -r "/tmp/config-homekit.json" ] || {
+                   echo -n "*** Restoring config-homekit.json..."
+                   /bin/cp -p "/tmp/config-homekit.json" "${CONTROLLER_DIR}/config-homekit.json"
+                   echo "DONE"
+               }
+               [ ! -r "/tmp/ffmpeg.json" ] || {
+                   echo -n "*** Restoring ffmpeg..."
+                   /bin/cp -p "/tmp/ffmpeg" "${CONTROLLER_DIR}/ffmpeg"
+                   echo "DONE"
+               }          
+               [ ! -r "/tmp/storage" ] || {
+                   echo -n "*** Restoring storage dir..."
+                   /bin/cp -r -p "/tmp/storage" "${CONTROLLER_DIR}/storage"
+                   /bin/rm -rf "/tmp/storage"
+                   echo "DONE"
+               }                                          
                break;;
            [Nn]* ) break;;
            * ) echo "Please answer yes or no.";;
