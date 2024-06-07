@@ -52,7 +52,7 @@ const sip = {
     'domain': undefined,
     'debug': false,
     'expire': 300,
-    'devaddr': 20
+    'devaddr': model === 'c100x' ? utils.detectDevAddrOnC100X() : 20
 }
 
 const configFile = './config.json';

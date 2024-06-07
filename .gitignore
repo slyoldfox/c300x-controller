@@ -132,4 +132,4 @@ dist
 /config.json
 /config-homekit.json
 .idea
-lib/homekit/storage/
+storage
