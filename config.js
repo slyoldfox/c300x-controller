@@ -11,9 +11,6 @@ const version = require('./package.json').version;
 const model = utils.model()
 
 const global = {
-    // EXPERIMENTAL: It seems that sometimes the C100X cannot enable the streams through openwebnet commands
-    // We can use UDP proxies instead to forward the RTP packets
-    'useUdpProxies': false,
     // Use the higher resolution video stream
     'highResVideo': model === 'c100x' ? false : true
 }
