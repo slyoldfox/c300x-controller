@@ -6,7 +6,7 @@
 
 const base = require('./base')
 const config = require('./config')
-const sdpserver = require('./lib/sdpserver')
+const rtspserver = require('./lib/rtsp-server')
 const utils = require('./lib/utils')
 const homekitBundle = require('./lib/homekit/homekit-bundle')
 const jsonstore = require('./json-store')
@@ -15,7 +15,7 @@ const BASE_PATH = __dirname
 const filestore = jsonstore.create( BASE_PATH + '/config-homekit.json')
 const model = utils.model().toLocaleUpperCase()
 
-sdpserver.create(base.registry)
+rtspserver.create(base.registry)
 
 utils.fixMulticast()
 utils.verifyFlexisip('webrtc@' + utils.domain()).forEach( (e) => console.error( `* ${e}`) )
@@ -34,13 +34,19 @@ const videoConfig = filestore.read('videoConfig', () => {
         pinCode: homekitBundle.randomPinCode(),
         displayName: model,
         vcodec: 'copy',
-        source: '-i tcp://127.0.0.1:8081', // or tcp://192.168.0.XX:8081 in development
+        source: '-i rtsp://127.0.0.1:6554/doorbell', // or -i rtsp://192.168.0.XX:6554/doorbell in development
         audio: true,
         stillImageSource: '-i https://iili.io/JZq8pwB.jpg',
+        debug: false,
         debugReturn: false,
+        videoFilter: "select=gte(n\\,6)", // select frame 6 from the stream for the snapshot image, previous frames may contain invalid images
         returnAudioTarget: "-codec:a speex -ar 8000 -ac 1 -f rtp -payload_type 97 rtp://127.0.0.1:4000" // or rtp://192.168.0.XX:40004 in development
     }
 })
+
+if( videoConfig.source?.indexOf("tcp://") >= 0 ) {
+    throw new Error("Please change your videoConfig.source, tcp://127.0.0.1:8081 is deprecated and replaced by rtsp://127.0.0.1:6554/doorbell")
+}
 
 const homekitManager = new homekitBundle.HomekitManager( base.eventbus, BASE_PATH, bridgeConfig, videoConfig, config.version, model, videoConfig)
 

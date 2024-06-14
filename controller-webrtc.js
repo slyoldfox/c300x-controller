@@ -6,9 +6,9 @@
 // 
 
 const base = require('./base')
-const sdpserver = require('./lib/sdpserver')
+const rtspserver = require('./lib/rtsp-server')
 const utils = require('./lib/utils')
 
 utils.verifyFlexisip('webrtc@' + utils.domain()).forEach( (e) => console.error( `* ${e}`) )
 
-sdpserver.create(base.registry)
+rtspserver.create(base.registry)

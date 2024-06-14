@@ -20,6 +20,7 @@
     "@slyoldfox/sip": "^0.0.6-1",
     "hap-nodejs": "^0.12.1",
     "pick-port": "^1.0.0",
+    "rtsp-streaming-server": "^2.0.6",
     "rxjs": "^7.8.1",
     "sdp": "^3.0.3",
     "stun": "^2.1.0",
