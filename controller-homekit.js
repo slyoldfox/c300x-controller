@@ -15,7 +15,7 @@ const BASE_PATH = __dirname
 const filestore = jsonstore.create( BASE_PATH + '/config-homekit.json')
 const model = utils.model().toLocaleUpperCase()
 
-rtspserver.create(base.registry)
+rtspserver.create(base.registry, base.eventbus)
 
 utils.fixMulticast()
 utils.verifyFlexisip('webrtc@' + utils.domain()).forEach( (e) => console.error( `* ${e}`) )
@@ -49,6 +49,7 @@ if( videoConfig.source?.indexOf("tcp://") >= 0 ) {
 }
 
 const homekitManager = new homekitBundle.HomekitManager( base.eventbus, BASE_PATH, bridgeConfig, videoConfig, config.version, model, videoConfig)
+const {doorbell, streamingDelegate} = homekitManager.addDoorbell(videoConfig)
 
 base.eventbus.on('doorbell:pressed', () => {
     console.log('doorbell:pressed')
@@ -85,9 +86,9 @@ homekitManager.addSwitch('Muted' )
     .switchedOff( () => { openwebnet.run("ringerUnmute").then( () => utils.reloadUi() ) } )
     .updateState( () => {
         return openwebnet.run("ringerStatus").then( (result) => {
-            if( result == '*#8**33*0##' ) {
+            if( result === '*#8**33*0##' ) {
                 return true
-            } else if( result == '*#8**33*1##' ) {
+            } else if( result === '*#8**33*1##' ) {
                 return false
             }        
         } )
@@ -101,7 +102,7 @@ if( model !== 'C100X' ) {
             return openwebnet.run("aswmStatus").then( result => {
                 const matches = [...result.matchAll(/\*#8\*\*40\*([01])\*([01])\*/gm)]
                 if( matches && matches.length > 0 && matches[0].length > 0 ) {
-                    return matches[0][1] == '1'
+                    return matches[0][1] === '1'
                 }
                 return false
             } )
@@ -111,3 +112,47 @@ if( model !== 'C100X' ) {
 openwebnet.run("firmwareVersion").catch( ()=>{} ).then( (result) => {
     homekitManager.updateFirmwareVersion(result)
 })
+
+const homekit = new class Api {
+	path() {
+		return "/homekit"
+	}
+
+	description() {
+		return "Homekit debug page"
+	}
+
+	async handle(request, response, url, q) {
+        if(!q.raw) {
+            response.write("<pre>")
+            response.write("<a href='./homekit?press=true'>Emulate homekit doorbell press</a><br/>")
+            response.write("<a href='./homekit?thumbnail=true&raw=true'>Video thumbnail (cached)</a><br/>")
+            response.write("<a href='./homekit?thumbnail=true&raw=true&refresh=true'>Video thumbnail (uncached)</a><br/>")
+            response.write("</pre>")
+        }
+
+        if(q.press === "true") {
+            base.eventbus.emit('homekit:pressed')
+        }
+        if(q.thumbnail === "true") {
+            if(!q.raw || q.raw !== "true" ) {
+                response.write("<br/>call this endpoing with &raw=true")
+
+            } else {
+                const request = {}
+                if(q.refresh === 'true'){
+                    streamingDelegate.snapshotPromise = undefined
+                }
+                streamingDelegate.handleSnapshotRequest(request, (error, image) => {
+                    if(image)
+                        response.write(image)
+                    response.end()
+                })
+            }
+
+        }
+        videoConfig.debug = q.enablevideodebug === 'true';
+	}
+}
+
+base.api.apis.set(homekit.path(), homekit )

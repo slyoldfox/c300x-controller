@@ -12,7 +12,7 @@ const model = utils.model()
 
 const global = {
     // Use the higher resolution video stream
-    'highResVideo': model === 'c100x' ? false : true
+    'highResVideo': model !== 'c100x'
 }
 const doorUnlock = {
     // Default behaviour is device ID 20, if you need more, add them to additionalLocks in config.json
@@ -61,7 +61,7 @@ const configPaths = [configPath, cwdConfigPath, extraConfigPath]
 
 function overrideAndPrintValue( name, base, overridden ) {
     for(const key in overridden) {
-        if( overridden[key] != undefined && base[key] !== overridden[key] ) {
+        if( overridden[key] !== undefined && base[key] !== overridden[key] ) {
             console.log( name + "." + key + ": " + JSON.stringify(  base[key], null, 2) + " -> " + JSON.stringify( overridden[key], null, 2 ))
             base[key] = overridden[key]
         }
@@ -76,8 +76,7 @@ function detectConfig() {
 
 const detectedPath = detectConfig()
 if( detectedPath ) {
-    console.log(`FOUND config.json file at '${detectedPath}' and overriding the values from it.`)
-    console.log("")
+    console.log(`FOUND config.json file at '${detectedPath}' and overriding the values from it.\r\n`)
     const config = JSON.parse( fs.readFileSync(detectedPath) )
     overrideAndPrintValue( "global", global, config.global)
     overrideAndPrintValue( "doorUnlock", doorUnlock, config.doorUnlock)
@@ -95,9 +94,9 @@ if( global.highResVideo && utils.model() === 'c100x' ) {
     global.highResVideo = false
 }
 
-console.log("============================== final config =====================================")
-console.log('\x1b[33m'+JSON.stringify( { global, doorUnlock, additionalLocks, mqtt_config, sip }, null, 2 ) +'\x1b[0m' )
-console.log("=================================================================================")
+console.log(`============================== final config =====================================
+\x1b[33m${JSON.stringify( { global, doorUnlock, additionalLocks, mqtt_config, sip }, null, 2 )}\x1b[0m
+=================================================================================`)
 
 module.exports = {
     doorUnlock, additionalLocks, mqtt_config, global, sip, version

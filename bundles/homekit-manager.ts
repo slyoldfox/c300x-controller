@@ -172,8 +172,6 @@ export class HomekitManager {
             category: Categories.BRIDGE,
             addIdentifyingMaterial: false
         });  
-
-        this.addDoorbell(videoConfig)
     }
     addDoorbell(videoConfig: VideoConfig) {
         const accessory = new Accessory(videoConfig.displayName, uuid.generate('hap-nodejs:accessories:doorbell:' + videoConfig.displayName));
@@ -198,6 +196,10 @@ export class HomekitManager {
         });
         
         console.log('Camera pairing code: ' + videoConfig.pinCode);
+        return {
+            doorbell: accessory,
+            streamingDelegate
+        }
     }
     addLock(id: string, name: string ) {
         const lock = new LockAccessory(id, name, this.eventbus);

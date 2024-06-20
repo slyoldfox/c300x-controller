@@ -273,9 +273,7 @@ export class SipManager {
               this.registrarContact = m.headers.contact[0].uri;
             }
             if( sipOptions.debugSip ) {
-              console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
-              console.log(stringify( m ));
-              console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+              console.log(`<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\r\n${stringify(m)}\r\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<`)
             }
           },
           appendGruu: function( contact, gruuUrn ) {
@@ -315,7 +313,8 @@ export class SipManager {
                 }
               } else if( m.method == 'ACK' || m.method == 'BYE' ) {
                 m.headers.to.uri = toWithDomain
-                m.uri = this.registrarContact
+                if( this.registrarContact )
+                  m.uri = this.registrarContact
               } else if( (m.method == undefined && m.status) && m.headers.cseq ) {
                 if( m.status == '200' ) {
                   // Response on invite
@@ -339,15 +338,7 @@ export class SipManager {
             }
 
             if( sipOptions.debugSip ) {
-              console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-              if( m.uri ) {
-                console.log(stringify( m ));
-              } else {
-                m.uri = '';
-                console.log( stringify( m ) )
-              }
-              
-              console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+              console.log(`>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\r\n${stringify(m)}\r\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>`);
             }
           },
         },

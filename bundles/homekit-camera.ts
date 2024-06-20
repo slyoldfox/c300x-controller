@@ -9,6 +9,7 @@ import { Logger } from './homekit-logger';
 
 export type VideoConfig = {
   source?: string;
+  stillImageSourceCacheTime?: number
   stillImageSource?: string;
   returnAudioTarget?: string;
   maxStreams?: number;
@@ -170,7 +171,9 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     }
   
     fetchSnapshot(snapFilter?: string): Promise<Buffer> {
+      const stillImageSourceCacheTime = this.videoConfig.stillImageSourceCacheTime || (5 * 60 * 1000)
       this.snapshotPromise = new Promise((resolve, reject) => {
+        const t = setTimeout(() => reject(new Error("Operation timed out creating snapshot")), 6000);
         const startTime = Date.now();
         const ffmpegArgs = (this.videoConfig.stillImageSource || this.videoConfig.source!) + // Still
           ' -frames:v 1' +
@@ -179,7 +182,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
           ' -hide_banner' +
           ' -loglevel error';
   
-        //this.log.debug('Snapshot command: ' + this.videoProcessor + ' ' + ffmpegArgs, this.cameraName, this.videoConfig.debug);
+        this.log.debug('Snapshot command: ' + this.videoProcessor + ' ' + ffmpegArgs, this.cameraName, this.videoConfig.debug);
         const ffmpeg = spawn(this.videoProcessor, ffmpegArgs.split(/\s+/), { env: process.env });
   
         let snapshotBuffer = Buffer.alloc(0);
@@ -187,6 +190,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
           snapshotBuffer = Buffer.concat([snapshotBuffer, data]);
         });
         ffmpeg.on('error', (error: Error) => {
+          clearTimeout(t)
           reject('FFmpeg process creation failed: ' + error.message);
         });
         ffmpeg.stderr.on('data', (data) => {
@@ -198,14 +202,16 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         });
         ffmpeg.on('close', () => {
           if (snapshotBuffer.length > 0) {
+            clearTimeout(t)
             resolve(snapshotBuffer);
           } else {
+            clearTimeout(t)
             reject('Failed to fetch snapshot.');
           }
   
           setTimeout(() => {
             this.snapshotPromise = undefined;
-          }, 5 * 60 * 1000); // Expire cached snapshot after 5 minutes
+          }, stillImageSourceCacheTime); // Expire cached snapshot after 5 minutes
   
           const runtime = (Date.now() - startTime) / 1000;
           let message = 'Fetching snapshot took ' + runtime + ' seconds.';
@@ -256,7 +262,13 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   
       try {
         const cachedSnapshot = !!this.snapshotPromise;
-  
+
+        if(request.reason) {
+          console.log('snapshot requested for reason:', request.reason);
+        }
+
+        const now = Date.now()
+        
         //this.log.debug('Snapshot requested: ' + request.width + ' x ' + request.height,
         //  this.cameraName, this.videoConfig.debug);
   
@@ -265,10 +277,14 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         //this.log.debug('Sending snapshot: ' + (resolution.width > 0 ? resolution.width : 'native') + ' x ' +
         //  (resolution.height > 0 ? resolution.height : 'native') +
         //  (cachedSnapshot ? ' (cached)' : ''), this.cameraName, this.videoConfig.debug);
-  
-        const resized = await this.resizeSnapshot(snapshot, resolution.resizeFilter);
-        callback(undefined, resized);
+
+        //const resized = await this.resizeSnapshot(snapshot, resolution.resizeFilter);
+        if(!cachedSnapshot)
+          this.log.debug("Snapshot took: " + (Date.now() - now) + "ms", this.cameraName, this.videoConfig.debug)
+        callback(undefined, snapshot);
+
       } catch (err) {
+        this.snapshotPromise = undefined
         this.log.error(err as string, this.cameraName);
         callback();
       }
