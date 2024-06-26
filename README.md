@@ -451,7 +451,7 @@ action:
 mode: restart
 ```
 
-If you now access to http://<<your-intercom-IP>>:8080/register-endpoint, you can see your endpoints registered.
+If you now access to `http://<your-intercom-IP>:8080/register-endpoint`, you can see your endpoints registered.
 
 ## Development
 
