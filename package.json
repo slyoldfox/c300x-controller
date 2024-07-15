@@ -1,6 +1,6 @@
 {
   "name": "c300x-controller",
-  "version": "2024.6.4",
+  "version": "2024.7.1",
   "files": [
     "dist/**"
   ],
@@ -32,6 +32,6 @@
   },
   "overrides": {
     "rtsp-stream": "npm:@slyoldfox/rtsp-stream@1.0.1"
-  },  
+  },
   "license": "ISC"
 }
