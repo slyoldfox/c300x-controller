@@ -11,4 +11,4 @@ const utils = require('./lib/utils')
 
 utils.verifyFlexisip('webrtc@' + utils.domain()).forEach( (e) => console.error( `* ${e}`) )
 
-rtspserver.create(base.registry)
+rtspserver.create(base.registry, base.eventbus)

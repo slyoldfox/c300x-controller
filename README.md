@@ -2,6 +2,7 @@
 
 ## Table of Contents
 
+- [Support](#support)
 - [API](#api)
 - [Handlers](#handlers)
 - [Setup procedure](#setup-procedure)
@@ -9,6 +10,13 @@
 - [Homekit](#homekit)
 - [Development](#development)
 
+## Support
+
+I have put many hours of research in the BTicino intercom.
+
+Many people have been asking me if they can send me some hardware to show their support.
+
+If you want to support me, have a look at my [Amazon wishlist](https://www.amazon.de/registries/gl/guest-view/2S9AZ0FONMSK9?language=en_GB&currency=EUR) ❤️🙏 and buy anything (or nothing) you see there.
 
 ## API
 
@@ -25,7 +33,9 @@ Supports:
 * Exposes the voicemail videoclips
 * Display the videoclip
 * Send MQTT messages for openwebnet events and intercom status
-* WebRTC bundle with embedded SIP client and SDP socket server
+* WebRTC bundle with embedded SIP client and RTSP server
+* Homekit bundle with support for locks, voicemail and muting intercom, doorbell
+* HKSV (Homekit Secure Video) recordings on doorbell events and motion events
 
 ## Handlers
 
@@ -249,9 +259,14 @@ In config.json add the following config:
 
 Add the `webrtc` to the linphone files if you wish to receive incoming calls.
 
-When starting the WebRTC bundle, an additional SDP server will be available at `tcp://192.168.0.X:8081`.
+When starting the WebRTC bundle, an additional RTSP server will be available at `rtsp://192.168.0.X:6554/doorbell`.
 
-This allows you to use `ffplay -f sdp -i tcp://192.168.0.XX:8081` or `ffmpeg -f sdp -i tcp://192.168.XX:8081` to setup the underlying SIP call and view the camera.
+This allows you to use `ffplay -f rtsp -i rtsp://192.168.0.X:6554/doorbell` or `ffmpeg -f rtsp -i rtsp://192.168.0.X:6554/doorbell` to setup the underlying SIP call and view the camera.
+
+There is also two more endpoints:
+
+* `rtsp://192.168.0.X:6554/doorbell-video` is a video only stream (no audio)
+* `rtsp://192.168.0.X:6554/doorbell-recorder` is used internally for HKSV recordings
 
 You can use the Home Assistant add-on or integration at https://github.com/AlexxIT/WebRTC to add a WebRTC card to your dashboard.
 
@@ -262,16 +277,24 @@ You can add a stream to the Bticino intercom by specifying the following `go2rtc
 ```
 streams:
   doorbell:
-    - "ffmpeg:tcp://192.168.0.XX:8081#video=copy#audio=pcma"    
+    - "ffmpeg:rtsp://192.168.0.20:6554/doorbell#video=copy#audio=pcma"    
     - "exec:ffmpeg -re -fflags nobuffer -f alaw -ar 8000 -i - -ar 8000 -acodec speex -f rtp -payload_type 97 rtp://192.168.0.XX:40004#backchannel=1"
 ```
 
-The `ffmpeg:tcp://192.168.0.XX:8081#video=copy#audio=pcma"` line talks to the SDP server inside the c300-controller and will setup a SIP call in the background.
+The `ffmpeg:rtsp://192.168.0.20:6554/doorbell#video=copy#audio=pcma"` line talks to the RTSP server inside the c300-controller and will setup a SIP call in the background.
 
 The options `#video=copy#audio=pcma` tell go2rtc to copy the `h264` and transcode the audio (from `speex`) to `pcma`
 
 The `exec:ffmpeg ...` line specifies the `backchannel`. This is the stream from your (browser) microphone towards the intercom.
 It will read the microphone data from the websocket and transcode it to `speex` and send it the intercom using `rtp`. The port `40004` is the port of the UDP proxy inside the c300-controller.
+
+In `go2rtc.yaml` you might also want to configure the location of the `ffmpeg` binary if you need a more recent version.
+Be aware that some `ffmpeg` binaries don't support the `speex` library.
+
+```
+ffmpeg:
+  bin: /home/hass/ffmpeg-linux-x64  # path to ffmpeg binary
+```
 
 The WebRTC card configuration looks like this:
 
@@ -328,6 +351,30 @@ At the moment the Bridge exposes:
 * All locks
 * Mute/unmute switch
 * Voicemail switch (C300X only)
+
+In addition to the bridge it will also expose a doorbell in standalone accessory mode.
+
+The PIN code to pair is shown in the console or in the file `config-homekit.json` after startup in the `videoConfig` section.
+
+You can tweak the `videoConfig` settings to change:
+
+* The thumbnail displayed in Homekit with `stillImageSource`
+  * A static image: `-i https://iili.io/JZq8pwB.jpg`
+  * A snapshot from the video only stream: `-i rtsp://127.0.0.1:6554/doorbell-video`
+* A video filter with `videoFilter`, defaults to `select=gte(n\,6)` which is the 6th frame from the stream
+* Enable/disable `Homekit Secure Video` recordings with `hksv`
+* Enable debugging of the video streams with `debug`
+* Enable debugging of the return audio with `debugReturn`
+
+Since version 2024.7.1 - you can enable `hksv` in the `videoConfig` section. This will enable Homekit recordings when someone rings the doorbell.
+
+To use Homekit Secure Video you need an Apple Tv 2nd Gen (wired) or Homepod.
+
+Once you enable the flag and started the Homekit bundle, you should be able to pair the camera and receive options to record the stream.
+
+Make sure you set Motion Detection to `Any motion detected`.
+
+When somebody rings your doorbell, a motion clip will be recorded. There will be no audio recorded, just video.
 
 ## Development
 

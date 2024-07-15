@@ -36,9 +36,10 @@ const videoConfig = filestore.read('videoConfig', () => {
         vcodec: 'copy',
         source: '-i rtsp://127.0.0.1:6554/doorbell', // or -i rtsp://192.168.0.XX:6554/doorbell in development
         audio: true,
-        stillImageSource: '-i https://iili.io/JZq8pwB.jpg',
+        stillImageSource: '-i rtsp://127.0.0.1:6554/doorbell-video',
         debug: false,
         debugReturn: false,
+        hksv: true,
         videoFilter: "select=gte(n\\,6)", // select frame 6 from the stream for the snapshot image, previous frames may contain invalid images
         returnAudioTarget: "-codec:a speex -ar 8000 -ac 1 -f rtp -payload_type 97 rtp://127.0.0.1:4000" // or rtp://192.168.0.XX:40004 in development
     }
@@ -134,10 +135,12 @@ const homekit = new class Api {
         if(q.press === "true") {
             base.eventbus.emit('homekit:pressed')
         }
+        if(q.motion === "true") {
+            base.eventbus.emit('homekit:motion', q.motionTime)
+        }        
         if(q.thumbnail === "true") {
             if(!q.raw || q.raw !== "true" ) {
-                response.write("<br/>call this endpoing with &raw=true")
-
+                response.write("<br/>Call this url with &raw=true")
             } else {
                 const request = {}
                 if(q.refresh === 'true'){
