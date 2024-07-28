@@ -111,15 +111,18 @@ v17.9.1
 ```
 cd /home/bticino/cfg/extra/
 mkdir c300x-controller
-wget https://github.com/slyoldfox/c300x-controller/archive/refs/heads/main.tar.gz
-tar xvfz main.tar.gz --strip-components 1
-rm main.tar.gz
+cd c300x-controller
+wget https://github.com/slyoldfox/c300x-controller/releases/latest/download/bundle.js -O /home/bticino/cfg/extra/c300x-controller/bundle.js 
+# if using webrtc
+wget https://github.com/slyoldfox/c300x-controller/releases/latest/download/bundle-webrtc.js -O /home/bticino/cfg/extra/c300x-controller/bundle.js 
+# if using homekit
+wget https://github.com/slyoldfox/c300x-controller/releases/latest/download/bundle-homekit.js -O /home/bticino/cfg/extra/c300x-controller/bundle.js 
 ```
 
 now do a check run
 
 ```
-/home/bticino/cfg/extra/node/bin/node /home/bticino/cfg/extra/c300x-controller/controller.js
+/home/bticino/cfg/extra/node/bin/node /home/bticino/cfg/extra/c300x-controller/bundle.js
 ```
 
 #### 5. Edit firewall rules
@@ -168,7 +171,7 @@ set -e
 
 PIDFILE=/var/run/c300x-controller
 DAEMON="/home/bticino/cfg/extra/node/bin/node"
-DAEMON_ARGS="/home/bticino/cfg/extra/c300x-controller/controller.js"
+DAEMON_ARGS="/home/bticino/cfg/extra/c300x-controller/bundle.js"
 
 . /etc/init.d/functions
 
