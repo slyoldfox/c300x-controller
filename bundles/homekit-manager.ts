@@ -169,7 +169,7 @@ export class HomekitManager {
         console.log("Bridge pairing code: " + config.pinCode)
 
         this.bridge.publish({
-            advertiser: MDNSAdvertiser.CIAO,
+            advertiser: videoConfig.advertiser || MDNSAdvertiser.CIAO,
             username: config.username,
             pincode: config.pinCode,
             category: Categories.BRIDGE,
@@ -207,7 +207,7 @@ export class HomekitManager {
         })        
 
         this.doorbell.publish({
-          advertiser: MDNSAdvertiser.CIAO,
+          advertiser: videoConfig.advertiser || MDNSAdvertiser.CIAO,
           username: videoConfig.username,
           pincode: videoConfig.pinCode,
           category: Categories.VIDEO_DOORBELL,

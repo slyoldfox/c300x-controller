@@ -52,6 +52,11 @@ const sip = {
     'devaddr': model === 'c100x' ? utils.detectDevAddrOnC100X() : 20
 }
 
+const homeassistant = {
+    'token': undefined,
+    'url': undefined
+}
+
 const configFile = './config.json';
 
 const configPath = path.join(__dirname, configFile);
@@ -83,6 +88,7 @@ if( detectedPath ) {
     overrideAndPrintValue( "additionalLocks", additionalLocks, config.additionalLocks)
     overrideAndPrintValue( "mqtt_config", mqtt_config, config.mqtt_config)
     overrideAndPrintValue( "sip", sip, config.sip)
+    overrideAndPrintValue( "homeassistant", homeassistant, config.homeassistant)
     console.log("")
 } else {
     console.log(`NO config.json file found in paths '${configPaths}', using built-in defaults.`)
@@ -99,5 +105,5 @@ console.log(`============================== final config =======================
 =================================================================================`)
 
 module.exports = {
-    doorUnlock, additionalLocks, mqtt_config, global, sip, version
+    doorUnlock, additionalLocks, mqtt_config, global, sip, homeassistant, version
 }

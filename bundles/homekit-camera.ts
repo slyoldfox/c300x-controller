@@ -1,5 +1,5 @@
 // Adapted from https://github.com/Sunoo/homebridge-camera-ffmpeg/blob/master/src/streamingDelegate.ts
-import { SnapshotRequest, SnapshotRequestCallback, PrepareStreamCallback, PrepareStreamRequest, StreamRequestCallback, StreamingRequest, CameraStreamingDelegate, PrepareStreamResponse, StreamRequestTypes, AudioStreamingCodecType, StartStreamRequest, VideoInfo, DoorbellController, ResourceRequestReason } from 'hap-nodejs';
+import { SnapshotRequest, SnapshotRequestCallback, PrepareStreamCallback, PrepareStreamRequest, StreamRequestCallback, StreamingRequest, CameraStreamingDelegate, PrepareStreamResponse, StreamRequestTypes, AudioStreamingCodecType, StartStreamRequest, VideoInfo, DoorbellController, ResourceRequestReason, MDNSAdvertiser } from 'hap-nodejs';
 import { spawn } from 'child_process';
 import { CameraController, SRTPCryptoSuites } from 'hap-nodejs';
 import pickPort, { pickPortOptions } from 'pick-port';
@@ -29,6 +29,7 @@ export type VideoConfig = {
   debugReturn?: boolean;
   videoProcessor?: string;
   $internalVideoProcessor: string;
+  advertiser?: MDNSAdvertiser;
   hksv: boolean
   username?: string;
   pinCode: string;
