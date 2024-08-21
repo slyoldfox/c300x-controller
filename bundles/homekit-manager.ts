@@ -6,12 +6,13 @@
 // This file is subjected to change without backwards compatibility and probably needs heavy refactoring
 //
 
-import {Accessory, Bridge, Categories, Characteristic, Service, HAPStorage, uuid, CharacteristicEventTypes} from 'hap-nodejs'
+import {Accessory, Bridge, Categories, Characteristic, Service, HAPStorage, uuid, CharacteristicEventTypes, DoorbellController, AudioRecordingCodecType, AudioRecordingSamplerate, AudioStreamingCodecType, AudioStreamingSamplerate, CameraControllerOptions, DoorbellOptions, H264Level, H264Profile, MediaContainerType, SRTPCryptoSuites, VideoCodecType, Resolution, MDNSAdvertiser} from 'hap-nodejs'
 import { randomBytes } from 'crypto';
 import { StreamingDelegate, VideoConfig } from './homekit-camera';
-//import { RecordingDelegate } from './homekit-camera-recording';
 import { fetchFffmpeg } from './ffmpeg';
 import EventBus from '../lib/eventbus';
+import { RecordingDelegate } from './homekit-camera-recording';
+import { Doorbell } from 'hap-nodejs/dist/lib/definitions';
 
 const MANUFACTURER = "c300x-controller"
 let BUILDNUMBER = "0.0.0"
@@ -154,6 +155,7 @@ export function randomPinCode() {
 
 export class HomekitManager {
     bridge: Bridge
+    doorbell: Accessory
 
     constructor( private eventbus : EventBus, base_path : string, config, videoConfig: VideoConfig, buildNumber : string, model : string) {
         HAPStorage.setCustomStoragePath( base_path + "/storage")
@@ -167,6 +169,7 @@ export class HomekitManager {
         console.log("Bridge pairing code: " + config.pinCode)
 
         this.bridge.publish({
+            advertiser: videoConfig.advertiser || MDNSAdvertiser.CIAO,
             username: config.username,
             pincode: config.pinCode,
             category: Categories.BRIDGE,
@@ -174,22 +177,37 @@ export class HomekitManager {
         });  
     }
     addDoorbell(videoConfig: VideoConfig) {
-        const accessory = new Accessory(videoConfig.displayName, uuid.generate('hap-nodejs:accessories:doorbell:' + videoConfig.displayName));
-        setAccessoryInformation(accessory)
+        this.doorbell = new Accessory(videoConfig.displayName, uuid.generate('hap-nodejs:accessories:doorbell:' + videoConfig.displayName));
+        setAccessoryInformation(this.doorbell)
 
         const streamingDelegate = new StreamingDelegate(videoConfig)
-        //TODO: HKSV
-        //const recordingDelegate = new RecordingDelegate()
+        const recordingDelegate = new RecordingDelegate(videoConfig, this.doorbell)
+        const motionSensor = this.doorbell.addService(Service.MotionSensor)
+        const controller = new DoorbellController(this.getCameraControllerOptions(videoConfig, this.doorbell, streamingDelegate, recordingDelegate));
+        
+        streamingDelegate.setController( controller )
+        recordingDelegate.setController( controller )
 
-        accessory.configureController(streamingDelegate.controller);
+        this.doorbell.configureController(controller);
+
+        const doorbellService = this.doorbell.getService(Service.Doorbell);
 
         this.eventbus.on('homekit:pressed', () => {
-            console.log("HOMEKIT PRESSED EVENT")
-            const doorbellService = accessory.getService(Service.Doorbell);
-            doorbellService.getCharacteristic(Characteristic.ProgrammableSwitchEvent).updateValue(Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS);  
+            console.log("HOMEKIT PRESSED EVENT AT: " + Date())
+            doorbellService.getCharacteristic(Characteristic.ProgrammableSwitchEvent).updateValue(Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS); 
         })
 
-        accessory.publish({
+        this.eventbus.on('homekit:motion', (motionTime) => {
+            console.log("HOMEKIT MOTION EVENT AT: " + Date())
+            motionSensor.getCharacteristic(Characteristic.MotionDetected).updateValue(true);  
+            setTimeout( () => {
+                console.log("SET FALSE AT: " + Date())
+                motionSensor.getCharacteristic(Characteristic.MotionDetected).updateValue(false);  
+            }, motionTime || 20000 )
+        })        
+
+        this.doorbell.publish({
+          advertiser: videoConfig.advertiser || MDNSAdvertiser.CIAO,
           username: videoConfig.username,
           pincode: videoConfig.pinCode,
           category: Categories.VIDEO_DOORBELL,
@@ -197,7 +215,7 @@ export class HomekitManager {
         
         console.log('Camera pairing code: ' + videoConfig.pinCode);
         return {
-            doorbell: accessory,
+            doorbell: this.doorbell,
             streamingDelegate
         }
     }
@@ -225,8 +243,87 @@ export class HomekitManager {
     updateFirmwareVersion(version) {
         FIRMWAREVERSION = version
         setAccessoryInformation(this.bridge)
+        setAccessoryInformation(this.doorbell)
         this.bridge.bridgedAccessories.forEach( (accessory) => {
             setAccessoryInformation(accessory)
         } )
+    }
+    getCameraControllerOptions(videoConfig: VideoConfig, accesorry: Accessory, streamingDelegate : StreamingDelegate, recordingDelegate : RecordingDelegate) {
+        const hksv = videoConfig.hksv || true
+        const resolutions : Resolution[] = [
+          [320, 180, 30],
+          [320, 240, 15], // Apple Watch requires this configuration
+          [320, 240, 30],
+          [480, 270, 30],
+          [480, 360, 30],
+          [640, 360, 30],
+          [640, 480, 30],
+          [1280, 720, 30],
+          [1280, 960, 30],
+          [1920, 1080, 30],
+          [1600, 1200, 30]
+        ]        
+        const options: CameraControllerOptions & DoorbellOptions = {
+            cameraStreamCount: videoConfig.maxStreams || 2, // HomeKit requires at least 2 streams, but 1 is also just fine
+            delegate: streamingDelegate,
+            streamingOptions: {
+              supportedCryptoSuites: [SRTPCryptoSuites.AES_CM_128_HMAC_SHA1_80],
+              video: {
+                resolutions: resolutions,
+                codec: {
+                  profiles: [H264Profile.BASELINE, H264Profile.MAIN, H264Profile.HIGH],
+                  levels: [H264Level.LEVEL3_1, H264Level.LEVEL3_2, H264Level.LEVEL4_0]
+                }
+              },
+              audio: {
+                twoWayAudio: !!videoConfig.returnAudioTarget,
+                codecs: [
+                  {
+                    type: AudioStreamingCodecType.AAC_ELD,
+                    samplerate: AudioStreamingSamplerate.KHZ_16
+                    //type: AudioStreamingCodecType.OPUS,
+                    //samplerate: AudioStreamingSamplerate.KHZ_24
+                  }
+                ]
+              }
+            },
+            recording: hksv
+            ? {
+              options: {
+                prebufferLength: 4000,
+                mediaContainerConfiguration: [
+                  {
+                    type: MediaContainerType.FRAGMENTED_MP4,
+                    fragmentLength: 4000,
+                  },
+                ],
+                video: {
+                  type: VideoCodecType.H264,
+                  parameters: {
+                    profiles: [H264Profile.BASELINE, H264Profile.MAIN, H264Profile.HIGH],
+                    levels: [H264Level.LEVEL3_1, H264Level.LEVEL3_2, H264Level.LEVEL4_0],
+                  },
+                  resolutions: resolutions,
+                },
+                audio: {
+                  codecs: {
+                    type: AudioRecordingCodecType.AAC_LC,
+                    samplerate: AudioRecordingSamplerate.KHZ_24,
+                    bitrateMode: 0,
+                    audioChannels: 1,
+                  },
+                },
+              },
+              delegate: recordingDelegate as RecordingDelegate,
+            }
+            : undefined,
+            sensors: hksv
+                ? {
+                    motion: accesorry.getService(Service.MotionSensor),
+                    occupancy: undefined,
+                }
+                : undefined,
+          };
+        return options
     }
 }

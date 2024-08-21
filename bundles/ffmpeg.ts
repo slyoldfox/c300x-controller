@@ -1,5 +1,5 @@
 // Adapted from https://github.com/Sunoo/homebridge-camera-ffmpeg/blob/master/src/ffmpeg.ts
-import child_process, { ChildProcessWithoutNullStreams, spawn } from 'child_process';
+import child_process, { ChildProcess, ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import os from 'os';
 import fs from 'fs';
 import path from 'path';
@@ -90,6 +90,10 @@ function checkCorrupted(ffmpeg) {
   }  
 }
 
+export async function sleep(ms: number) {
+  await new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export function fetchFffmpeg(pathName) {
   const platform_arch = process.platform + '-' + process.arch
   const ffmpeg = path.join(pathName, "ffmpeg")
@@ -118,6 +122,35 @@ export function fetchFffmpeg(pathName) {
         }
     }
     return ffmpeg
+}
+
+export async function safeKillFFmpeg(cp: ChildProcess) {
+  if (!cp)
+      return;
+  if (cp.exitCode != null)
+      return;
+  await new Promise(async resolve => {
+      cp.on('exit', resolve);
+      // this will allow ffmpeg to send rtsp TEARDOWN etc
+      try {
+          cp.stdin.on('error', () => { });
+          cp.stdin.write('q\n');
+      }
+      catch (e) {
+      }
+
+      await sleep(2000);
+      for (const f of cp.stdio) {
+          try {
+              f?.destroy();
+          }
+          catch (e) {
+          }
+      }
+      cp.kill();
+      await sleep(2000);
+      cp.kill('SIGKILL');
+  });
 }
 
 export class FfmpegProcess {

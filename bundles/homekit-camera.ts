@@ -1,10 +1,10 @@
 // Adapted from https://github.com/Sunoo/homebridge-camera-ffmpeg/blob/master/src/streamingDelegate.ts
-import { SnapshotRequest, SnapshotRequestCallback, PrepareStreamCallback, PrepareStreamRequest, StreamRequestCallback, StreamingRequest, CameraStreamingDelegate, PrepareStreamResponse, StreamRequestTypes, AudioStreamingCodecType, StartStreamRequest, VideoInfo, H264Profile, H264Level, AudioStreamingSamplerate, DoorbellController, DoorbellOptions, CameraControllerOptions } from 'hap-nodejs';
+import { SnapshotRequest, SnapshotRequestCallback, PrepareStreamCallback, PrepareStreamRequest, StreamRequestCallback, StreamingRequest, CameraStreamingDelegate, PrepareStreamResponse, StreamRequestTypes, AudioStreamingCodecType, StartStreamRequest, VideoInfo, DoorbellController, ResourceRequestReason, MDNSAdvertiser } from 'hap-nodejs';
 import { spawn } from 'child_process';
 import { CameraController, SRTPCryptoSuites } from 'hap-nodejs';
 import pickPort, { pickPortOptions } from 'pick-port';
 import { createSocket, Socket } from 'dgram';
-import { FfmpegProcess } from './ffmpeg';
+import { FfmpegProcess, safeKillFFmpeg } from './ffmpeg';
 import { Logger } from './homekit-logger';
 
 export type VideoConfig = {
@@ -29,6 +29,8 @@ export type VideoConfig = {
   debugReturn?: boolean;
   videoProcessor?: string;
   $internalVideoProcessor: string;
+  advertiser?: MDNSAdvertiser;
+  hksv: boolean
   username?: string;
   pinCode: string;
   displayName: string;
@@ -67,70 +69,28 @@ type ActiveSession = {
 };
 
 export class StreamingDelegate implements CameraStreamingDelegate {
-    private readonly log: Logger;
+    private readonly log: Logger = new Logger()
     private readonly cameraName: string;
     private readonly unbridge: boolean;
     private readonly videoConfig: VideoConfig;
     private readonly videoProcessor: string;
-    readonly controller: DoorbellController;
+    controller: DoorbellController;
     private snapshotPromise?: Promise<Buffer>;
   
     // keep track of sessions
     pendingSessions: Map<string, SessionInfo> = new Map();
     ongoingSessions: Map<string, ActiveSession> = new Map();
     timeouts: Map<string, NodeJS.Timeout> = new Map();
-  
-    constructor(videoConfig: VideoConfig) { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
 
-      this.log = new Logger();
-  
+    constructor(videoConfig: VideoConfig) { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
       this.cameraName = videoConfig.displayName;
       this.unbridge = true;
       this.videoConfig = videoConfig!;
       this.videoProcessor = videoConfig.videoProcessor || videoConfig.$internalVideoProcessor;
-  
-      const options: CameraControllerOptions & DoorbellOptions = {
-        cameraStreamCount: this.videoConfig.maxStreams || 2, // HomeKit requires at least 2 streams, but 1 is also just fine
-        delegate: this,
-        streamingOptions: {
-          supportedCryptoSuites: [SRTPCryptoSuites.AES_CM_128_HMAC_SHA1_80],
-          video: {
-            resolutions: [
-              [320, 180, 30],
-              [320, 240, 15], // Apple Watch requires this configuration
-              [320, 240, 30],
-              [480, 270, 30],
-              [480, 360, 30],
-              [640, 360, 30],
-              [640, 480, 30],
-              [1280, 720, 30],
-              [1280, 960, 30],
-              [1920, 1080, 30],
-              [1600, 1200, 30]
-            ],
-            codec: {
-              profiles: [H264Profile.BASELINE, H264Profile.MAIN, H264Profile.HIGH],
-              levels: [H264Level.LEVEL3_1, H264Level.LEVEL3_2, H264Level.LEVEL4_0]
-            }
-          },
-          audio: {
-            twoWayAudio: !!this.videoConfig.returnAudioTarget,
-            codecs: [
-              {
-                type: AudioStreamingCodecType.AAC_ELD,
-                samplerate: AudioStreamingSamplerate.KHZ_16
-                //type: AudioStreamingCodecType.OPUS,
-                //samplerate: AudioStreamingSamplerate.KHZ_24
-              }
-            ]
-          }
-        },
-        //TODO: HKSV
-        //recording: {},
-        //sensors: {}
-      };
-  
-      this.controller = new DoorbellController(options);
+    }
+
+    setController( controller : DoorbellController ) {
+      this.controller = controller
     }
   
     private determineResolution(request: SnapshotRequest | VideoInfo, isSnapshot: boolean): ResolutionInfo {
@@ -173,7 +133,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     fetchSnapshot(snapFilter?: string): Promise<Buffer> {
       const stillImageSourceCacheTime = this.videoConfig.stillImageSourceCacheTime || (5 * 60 * 1000)
       this.snapshotPromise = new Promise((resolve, reject) => {
-        const t = setTimeout(() => reject(new Error("Operation timed out creating snapshot")), 6000);
         const startTime = Date.now();
         const ffmpegArgs = (this.videoConfig.stillImageSource || this.videoConfig.source!) + // Still
           ' -frames:v 1' +
@@ -184,7 +143,10 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   
         this.log.debug('Snapshot command: ' + this.videoProcessor + ' ' + ffmpegArgs, this.cameraName, this.videoConfig.debug);
         const ffmpeg = spawn(this.videoProcessor, ffmpegArgs.split(/\s+/), { env: process.env });
-  
+        const t = setTimeout(() => {
+          safeKillFFmpeg(ffmpeg)
+          reject(new Error("Operation timed out creating snapshot"))
+        } , 6000);
         let snapshotBuffer = Buffer.alloc(0);
         ffmpeg.stdout.on('data', (data) => {
           snapshotBuffer = Buffer.concat([snapshotBuffer, data]);
@@ -261,11 +223,12 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       const resolution = this.determineResolution(request, true);
   
       try {
-        const cachedSnapshot = !!this.snapshotPromise;
-
-        if(request.reason) {
-          console.log('snapshot requested for reason:', request.reason);
+        const reason = request.reason === ResourceRequestReason.EVENT ? 'event' : 'periodic';
+        if( reason === 'event' ) {
+          this.snapshotPromise = undefined
         }
+
+        const cachedSnapshot = !!this.snapshotPromise;
 
         const now = Date.now()
         

@@ -1,6 +1,5 @@
 // shameless copied, inlined and trimmed down version of https://github.com/koush/scrypted/blob/main/plugins/sip/src/sip-manager.ts
-import sip from '@slyoldfox/sip'
-import { stringify } from '@slyoldfox/sip'
+import sip, {stringify} from '@slyoldfox/sip'
 import sdp from 'sdp'
 import crypto from 'crypto'
 
@@ -29,16 +28,16 @@ export function timeoutPromise<T>(timeout: number, promise: Promise<T>): Promise
 export function generateUuid() {
     return crypto.randomUUID();
   }
-  
+
   export function randomInteger() {
     return Math.floor(Math.random() * 99999999) + 100000
   }
-  
+
   export function randomString(length: number) {
     const uuid = generateUuid()
     return uuid.replace(/-/g, '').substring(0, length).toLowerCase()
   }
-  
+
 
 export interface RtpStreamOptions extends SrtpOptions {
     port: number
@@ -49,13 +48,13 @@ export interface RtpOptions {
     audio: RtpStreamOptions
     video: RtpStreamOptions
   }
-  
+
   export interface RtpStreamDescription extends RtpStreamOptions {
     ssrc?: number
     iceUFrag?: string
     icePwd?: string
   }
-  
+
   export interface RtpDescription {
     address: string
     audio: RtpStreamDescription
@@ -72,8 +71,8 @@ export function decodeSrtpOptions(encodedOptions: string): SrtpOptions {
     const crypto = Buffer.from(encodedOptions, 'base64')
 
     return {
-        srtpKey: crypto.slice(0, 16),
-        srtpSalt: crypto.slice(16, 30),
+        srtpKey: crypto.subarray(0, 16),
+        srtpSalt: crypto.subarray(16, 30),
     }
 }
 
@@ -224,7 +223,7 @@ class Subject {
     while(this.subscriptions.length>0) {
       let sub = this.subscriptions.pop()
       sub(arg)
-    } 
+    }
   }
 }
 
@@ -287,7 +286,7 @@ export class SipManager {
                   contact[0].uri = contact[0].uri + ';gr=urn:uuid:' + sipOptions.gruuInstanceId
                 }
               }
-            }            
+            }
           },
           send:  function(m, remote) {
             /*
@@ -320,7 +319,7 @@ export class SipManager {
                   // Response on invite
                   this.appendGruu( m.headers.contact, true )
                 }
-                
+
                 // 183, 200, OK, CSeq: INVITE
               } else {
                 console.error("Error: Method construct for uri not implemented: " + m.method)
@@ -356,7 +355,7 @@ export class SipManager {
             this.sipStack.send(this.sipStack.makeResponse(request, 200, 'Ok'))
           } else if( request.method === 'INVITE' && sipOptions.sipRequestHandler ) {
             //let tryingResponse = this.sipStack.makeResponse( request, 100, 'Trying' )
-            //this.sipStack.send(tryingResponse)            
+            //this.sipStack.send(tryingResponse)
               //TODO: sporadic re-INVITEs are possible and should reply with 486 Busy here if already being handled
               let ringResponse = this.sipStack.makeResponse(request, 180, 'Ringing')
               this.toParams.tag = getRandomId()
@@ -365,7 +364,7 @@ export class SipManager {
               ringResponse.headers["supported"] = "replaces, outbound, gruu"
               // Can include SDP and could send 183 here for early media
               this.sipStack.send(ringResponse)
-  
+
               sipOptions.sipRequestHandler.handle( request )
            // }, 100 )
           } else if( request.method === 'CANCEL' || request.method === 'ACK' ) {
@@ -424,10 +423,10 @@ export class SipManager {
           if (response.headers.to.params && response.headers.to.params.tag) {
             this.toParams.tag = response.headers.to.params.tag
           }
-          
+
           if (response.headers.from.params && response.headers.from.params.tag) {
             this.fromParams.tag = response.headers.from.params.tag
-          } 
+          }
 
           if (response.status >= 300) {
             if (response.status !== 408 || method !== 'BYE') {
@@ -519,7 +518,7 @@ export class SipManager {
       this.fromParams.tag = incomingCallRequest.headers.to.params.tag
       this.toParams.tag = incomingCallRequest.headers.from.params.tag
       this.callId = incomingCallRequest.headers["call-id"]
-      
+
       await this.sipStack.send(callResponse)
 
       return parseRtpDescription(this.console, incomingCallRequest)
@@ -576,19 +575,18 @@ export class SipManager {
   * Send a message to the current call contact
   */
   async message( content: string ) : Promise<SipResponse> {
-    const { from } = this.sipOptions,
-    messageResponse = await this.request({
+    const { from } = this.sipOptions;
+    return await this.request({
         method: 'MESSAGE',
         headers: {
           //supported: 'replaces, outbound',
           allow:
-            'INVITE, ACK, CANCEL, OPTIONS, BYE, REFER, NOTIFY, MESSAGE, SUBSCRIBE, INFO, UPDATE',
+              'INVITE, ACK, CANCEL, OPTIONS, BYE, REFER, NOTIFY, MESSAGE, SUBSCRIBE, INFO, UPDATE',
           'content-type': 'text/plain',
-          contact: [{ uri: from, params: { expires: this.sipOptions.expire } }],
+          contact: [{uri: from, params: {expires: this.sipOptions.expire}}],
         },
         content: content
       });
-      return messageResponse;
   }
 
   async sendBye() : Promise<void | SipResponse> {

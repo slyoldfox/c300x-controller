@@ -1,6 +1,6 @@
 {
   "name": "c300x-controller",
-  "version": "2024.6.4",
+  "version": "2024.8.1",
   "files": [
     "dist/**"
   ],
@@ -20,7 +20,7 @@
     "@slyoldfox/sip": "^0.0.6-1",
     "hap-nodejs": "^0.12.1",
     "pick-port": "^1.0.0",
-    "rtsp-streaming-server": "^2.0.6",
+    "@slyoldfox/rtsp-streaming-server": "^2.1.0-interleaved",
     "rxjs": "^7.8.1",
     "sdp": "^3.0.3",
     "stun": "^2.1.0",
@@ -29,6 +29,9 @@
     "webpack": "^5.91.0",
     "webpack-cli": "^5.1.4",
     "webpack-shebang-plugin": "^1.1.8"
+  },
+  "overrides": {
+    "rtsp-stream": "npm:@slyoldfox/rtsp-stream@1.0.1"
   },
   "license": "ISC"
 }
