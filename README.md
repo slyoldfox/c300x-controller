@@ -379,6 +379,130 @@ Make sure you set Motion Detection to `Any motion detected`.
 
 When somebody rings your doorbell, a motion clip will be recorded. There will be no audio recorded, just video.
 
+## Home Assistant webhooks and endpoints
+
+It is possible to register a webhook in Home Assistant, in order to receive notifications about doorbell button pressed, door locked and door unlocked. 
+Note that you need to have home assistant configured in `https`, otherwise it doesn't work.
+
+The first thing to do is to declare three new automations, like this:
+
+```
+alias: Doorbell pressed
+description: ""
+trigger:
+  - platform: webhook
+    allowed_methods:
+      - POST
+      - PUT
+      - GET
+    local_only: false
+    webhook_id: doorbellPressed
+condition: []
+action:
+  - service: notify.<your device>
+    data:
+      title: Doorbell
+      message: Ringing!
+      data:
+        ttl: 0
+        priority: high
+        notification_icon: mdi:bell-ring
+mode: single
+```
+```
+alias: Door locked
+description: ""
+trigger:
+  - platform: webhook
+    allowed_methods:
+      - POST
+      - PUT
+      - GET
+    local_only: false
+    webhook_id: doorbellLocked
+condition: []
+action:
+  - service: notify.<your device>
+    data:
+      title: Doorbell
+      message: Door locked
+      data:
+        ttl: 0
+        priority: high
+        notification_icon: mdi:gate
+mode: single
+```
+```
+alias: Door unlocked
+description: ""
+trigger:
+  - platform: webhook
+    allowed_methods:
+      - POST
+      - PUT
+      - GET
+    local_only: false
+    webhook_id: doorbellUnlocked
+condition: []
+action:
+  - service: notify.<your device>
+    data:
+      title: Doorbell
+      message:  Door unlocked
+      data:
+        ttl: 0
+        priority: high
+        notification_icon: mdi:gate-alert
+mode: single
+```
+
+`SECURITY ALERT!` Please change your webhook ID, if anyone knows that and your home assistant address, it is simple to call that automation from external.
+
+In this mode, you have created three endpoints, that you can use to trigger the automations from the controller.
+These are the addresses:
+```
+* https://<ha-instance>/api/webhook/doorbellPressed
+* https://<ha-instance>/api/webhook/doorbellLocked
+* https://<ha-instance>/api/webhook/doorbellUnlocked
+```
+
+If you call it from your browser, you should receive a notification on your device.
+
+Now, you have to register these endpoints on the controller, but before you have to encode this addresses in base64, using this site: https://www.base64encode.org/. 
+You need to encode one URL at time, for example:
+```
+* https://<ha-instance>/api/webhook/doorbellPressed -> aHR0cHM6Ly88aGEtaW5zdGFuY2U+L2FwaS93ZWJob29rL2Rvb3JiZWxsUHJlc3NlZA==
+* https://<ha-instance>/api/webhook/doorbellLocked -> aHR0cHM6Ly88aGEtaW5zdGFuY2U+L2FwaS93ZWJob29rL2Rvb3JiZWxsTG9ja2Vk
+* https://<ha-instance>/api/webhook/doorbellUnlocked -> aHR0cHM6Ly88aGEtaW5zdGFuY2U+L2FwaS93ZWJob29rL2Rvb3JiZWxsVW5sb2NrZWQ=
+```
+Once you have these three base64, you can compose the REST Api call and put it in your HA configuration.yaml, in this mode:
+```
+rest_command:
+  register_doorbell:
+    url: "http://<<your-intercom-IP>>:8080/register-endpoint?raw=true&identifier=webrtc&pressed=<<base64url_doorbellPressed>>&locked=<<base64url_doorbellLocked>>&unlocked=<<base64url_doorbellUnlocked>>&verifyUser=false"
+    method: post
+```
+
+Restart your HA instance.
+
+Lastly, you need to register these endpoint in your intercom. You need one more automation; this runs every 4 minutes, because after 5 minutes the endpoint are removed:
+
+```
+alias: Doorbell API registration
+description: ""
+trigger:
+  - platform: time_pattern
+    minutes: /4
+condition: []
+action:
+  - service: rest_command.register_doorbell
+    metadata: {}
+    data: {}
+mode: restart
+```
+
+If you now access to `http://<your-intercom-IP>:8080/register-endpoint`, you can see your endpoints registered.
+
 ## Development
 
 For development, open an ssh connection to you intercom and forward the `openwebnet` port.
