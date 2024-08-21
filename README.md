@@ -8,6 +8,7 @@
 - [Setup procedure](#setup-procedure)
 - [WebRTC](#webrtc)
 - [Homekit](#homekit)
+- [Home Assistant webhooks and endpoints](#home-assistant-webhooks-and-endpoints)
 - [Development](#development)
 
 ## Support
