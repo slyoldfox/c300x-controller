@@ -6,8 +6,13 @@
 
 const base = require('./base')
 const config = require('./config')
-const rtspserver = require('./lib/rtsp-server')
 const utils = require('./lib/utils')
+
+utils.fixMulticast()
+utils.verifyFirewall()
+
+const rtspserver = require('./lib/rtsp-server')
+
 const homekitBundle = require('./lib/homekit/homekit-bundle')
 const jsonstore = require('./json-store')
 const openwebnet = require('./lib/openwebnet')
@@ -16,8 +21,6 @@ const filestore = jsonstore.create( BASE_PATH + '/config-homekit.json')
 const model = utils.model().toLocaleUpperCase()
 
 rtspserver.create(base.registry, base.eventbus)
-
-utils.fixMulticast()
 utils.verifyFlexisip('webrtc@' + utils.domain()).forEach( (e) => console.error( `* ${e}`) )
 
 const bridgeConfig = filestore.read('_bridge', () => {
