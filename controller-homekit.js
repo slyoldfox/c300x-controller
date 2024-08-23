@@ -9,7 +9,7 @@ const config = require('./config')
 const utils = require('./lib/utils')
 
 utils.fixMulticast()
-utils.verifyFirewall()
+utils.firewallAllowLAN()
 
 const rtspserver = require('./lib/rtsp-server')
 
