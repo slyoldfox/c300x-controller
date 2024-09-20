@@ -67,7 +67,10 @@ const configPaths = [configPath, cwdConfigPath, extraConfigPath]
 function overrideAndPrintValue( name, base, overridden ) {
     for(const key in overridden) {
         if( overridden[key] !== undefined && base[key] !== overridden[key] ) {
-            console.log( name + "." + key + ": " + JSON.stringify(  base[key], null, 2) + " -> " + JSON.stringify( overridden[key], null, 2 ))
+            if( name === "homeassistant" && key === "pages" )
+                console.log( `${name}.${key}: ${JSON.stringify(  base[key], null, 2)} -> [${overridden[key].length} pages]`)
+            else
+                console.log( `${name}.${key}: ${JSON.stringify(  base[key], null, 2)} -> ${JSON.stringify( overridden[key], null, 2 )}`)
             base[key] = overridden[key]
         }
     }

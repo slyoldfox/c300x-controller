@@ -33,6 +33,7 @@ Supports:
 * Validates scrypted setup
 * Exposes the voicemail videoclips
 * Display the videoclip
+* HA proxy for custom UI dashboards (see https://github.com/slyoldfox/c300x-dashboard)
 * Send MQTT messages for openwebnet events and intercom status
 * WebRTC bundle with embedded SIP client and RTSP server
 * Homekit bundle with support for locks, voicemail and muting intercom, doorbell
@@ -255,7 +256,7 @@ In config.json add the following config:
 ```
     "sip" : {
         "from": "webrtc@127.0.0.1",
-        "to": "c300x@192.168.0.20",
+        "to": "c300x@192.168.0.XX",
         "domain": "XXXXXXX.bs.iotleg.com",
         "debug": false
     }
@@ -281,11 +282,11 @@ You can add a stream to the Bticino intercom by specifying the following `go2rtc
 ```
 streams:
   doorbell:
-    - "ffmpeg:rtsp://192.168.0.20:6554/doorbell#video=copy#audio=pcma"    
+    - "ffmpeg:rtsp://192.168.0.XX:6554/doorbell#video=copy#audio=pcma"    
     - "exec:ffmpeg -re -fflags nobuffer -f alaw -ar 8000 -i - -ar 8000 -acodec speex -f rtp -payload_type 97 rtp://192.168.0.XX:40004#backchannel=1"
 ```
 
-The `ffmpeg:rtsp://192.168.0.20:6554/doorbell#video=copy#audio=pcma"` line talks to the RTSP server inside the c300-controller and will setup a SIP call in the background.
+The `ffmpeg:rtsp://192.168.0.XX:6554/doorbell#video=copy#audio=pcma"` line talks to the RTSP server inside the c300-controller and will setup a SIP call in the background.
 
 The options `#video=copy#audio=pcma` tell go2rtc to copy the `h264` and transcode the audio (from `speex`) to `pcma`
 
