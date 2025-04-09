@@ -17,7 +17,9 @@ I have put many hours of research in the BTicino intercom.
 
 Many people have been asking me if they can send me some hardware to show their support.
 
-If you want to support me, have a look at my [Amazon wishlist](https://www.amazon.de/registries/gl/guest-view/2S9AZ0FONMSK9?language=en_GB&currency=EUR) ❤️🙏 and buy anything (or nothing) you see there.
+If you want to support me ❤️🙏:
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/slyoldfox)
 
 ## API
 
