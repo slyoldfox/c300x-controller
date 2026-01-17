@@ -60,29 +60,33 @@ base.eventbus.on('doorbell:pressed', () => {
     base.eventbus.emit('homekit:pressed')
 })     
 
-const locks = ["default", ...Object.keys(config.additionalLocks)]
-
-for (const lock of locks) {
-    const doorHomekitSettings = filestore.read(lock, () => { return { 'displayName': lock, 'hidden': false } })
-
-    if( doorHomekitSettings && doorHomekitSettings.hidden ) 
+for (const lockKey in config.locks) {
+    const lock = config.locks[lockKey]
+    
+    if (lock.visible === 0 && !config.exposeInvisibleLocks) {
         continue
+    }
 
-    let door = config.additionalLocks[lock];
-    const { openSequence, closeSequence } = lock === "default" ? { openSequence: config.doorUnlock.openSequence, closeSequence: config.doorUnlock.closeSequence } : { openSequence: door.openSequence, closeSequence: door.closeSequence }
+    const doorHomekitSettings = filestore.read(lockKey, () => { 
+        return { 'displayName': lock.name || lockKey, 'hidden': false } 
+    })
+
+    if (doorHomekitSettings && doorHomekitSettings.hidden) {
+        continue
+    }
+    
+    const { openSequence, closeSequence } = lock
     base.eventbus
         .on('lock:unlocked:' + openSequence, () => {
-            //console.log('received lock:unlocked:' + openSequence)
-            base.eventbus.emit('homekit:locked:' + lock, false)
+            base.eventbus.emit('homekit:locked:' + lockKey, false)
         }).on('lock:locked:' + closeSequence, () => {
-            //console.log('received lock:locked:' + closeSequence)
-            base.eventbus.emit('homekit:locked:' + lock, true)
+            base.eventbus.emit('homekit:locked:' + lockKey, true)
     })        
 
-    homekitManager.addLock( lock, doorHomekitSettings.displayName )
-        .unlocked( () => {
+    homekitManager.addLock(lockKey, doorHomekitSettings.displayName)
+        .unlocked(() => {
             openwebnet.run("doorUnlock", openSequence, closeSequence)
-    } )
+    })
 }
 
 homekitManager.addSwitch('Muted' )

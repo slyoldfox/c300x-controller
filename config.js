@@ -6,6 +6,7 @@
 const fs = require("fs")
 const path = require('path')
 const utils = require('./lib/utils')
+const DeviceDetector = require('./lib/device-detector')
 
 const version = require('./package.json').version;
 const model = utils.model()
@@ -14,13 +15,25 @@ const global = {
     // Use the higher resolution video stream
     'highResVideo': model !== 'c100x'
 }
-const doorUnlock = {
-    // Default behaviour is device ID 20, if you need more, add them to additionalLocks in config.json
-    openSequence: '*8*19*20##' ,
-    closeSequence: '*8*20*20##',
-};
 
-const additionalLocks = {}
+// Expose locks marked as invisible (visible: 0) in mymodules to HomeKit
+let exposeInvisibleLocks = false
+
+// Auto-detect locks from mymodules file
+const detector = DeviceDetector.create()
+const detectedLocks = detector.detectLocks()
+
+const locks = {}
+for (const lock of detectedLocks) {
+    const lockKey = `lock-${lock.deviceId}`
+    locks[lockKey] = {
+        openSequence: `*8*19*${lock.deviceId}##`,
+        closeSequence: `*8*20*${lock.deviceId}##`,
+        name: `${lock.name} ${lock.buttonId}`,
+        visible: lock.visible,
+        deviceId: lock.deviceId
+    }
+}
 
 const mqtt_config = {
     // Set to enable to publish events to an external MQTT server
@@ -87,8 +100,9 @@ if( detectedPath ) {
     console.log(`FOUND config.json file at '${detectedPath}' and overriding the values from it.\r\n`)
     const config = JSON.parse( fs.readFileSync(detectedPath) )
     overrideAndPrintValue( "global", global, config.global)
-    overrideAndPrintValue( "doorUnlock", doorUnlock, config.doorUnlock)
-    overrideAndPrintValue( "additionalLocks", additionalLocks, config.additionalLocks)
+    if (config.exposeInvisibleLocks !== undefined) {
+        exposeInvisibleLocks = config.exposeInvisibleLocks
+    }
     overrideAndPrintValue( "mqtt_config", mqtt_config, config.mqtt_config)
     overrideAndPrintValue( "sip", sip, config.sip)
     overrideAndPrintValue( "homeassistant", homeassistant, config.homeassistant)
@@ -104,9 +118,9 @@ if( global.highResVideo && utils.model() === 'c100x' ) {
 }
 
 console.log(`============================== final config =====================================
-\x1b[33m${JSON.stringify( { global, doorUnlock, additionalLocks, mqtt_config, sip }, null, 2 )}\x1b[0m
+\x1b[33m${JSON.stringify( { global, exposeInvisibleLocks, locks, mqtt_config, sip }, null, 2 )}\x1b[0m
 =================================================================================`)
 
 module.exports = {
-    doorUnlock, additionalLocks, mqtt_config, global, sip, homeassistant, version
+    locks, mqtt_config, global, exposeInvisibleLocks, sip, homeassistant, version
 }
