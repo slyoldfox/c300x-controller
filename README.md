@@ -276,7 +276,7 @@ For the C100X:
 }
 ```
 
-Add the `webrtc` to the [linphone files](webrtc-linphone-configuration) if you wish to receive incoming calls.
+Add the `webrtc` to the [linphone files](#webrtc-linphone-configuration) if you wish to receive incoming calls.
 
 When starting the WebRTC bundle, an additional RTSP server will be available at `rtsp://192.168.0.X:6554/doorbell`.
 
