@@ -264,7 +264,19 @@ In config.json add the following config:
     }
 ```
 
-Add the `webrtc` to the linphone files if you wish to receive incoming calls.
+For the C100X:
+```
+{
+    "global": {
+      "highResVideo": false
+    },
+    "sip" : {
+        "debug": false
+    }
+}
+```
+
+Add the `webrtc` to the [linphone files](webrtc-linphone-configuration) if you wish to receive incoming calls.
 
 When starting the WebRTC bundle, an additional RTSP server will be available at `rtsp://192.168.0.X:6554/doorbell`.
 
@@ -342,6 +354,71 @@ ffmpeg:
 Replace the IP above with *127.0.0.1* and all transcoding and handling is now on your intercom.
 
 Inside HA add the Webrtc with `http://192.168.0.XX:1984` (replace with the IP of your intercom).
+
+## WebRTC linphone configuration
+
+WebRTC needs a user on BTicino files to work, and this procedure needs to be done every time you logout and login with your account in DoorEntry app. 
+
+The first thig to is to connect via SSH to the doorbell; when connected, you have to mount the root filesystem in read-write mode:
+
+```
+mount -oremount,rw /
+```
+
+Now change the listening ports by appending some arguments in /etc/init.d/flexisipsh:
+
+```
+case "$1" in
+  start)
+    start-stop-daemon --start --quiet --exec $DAEMON -- $DAEMON_ARGS --transports "sips:$2:5061;maddr=$2;require-peer-certificate=1 sip:127.0.0.1;maddr=127.0.0.1 sip:$2;maddr=$2"
+;;
+```
+
+Edit the /home/bticino/cfg/flexisip.conf so baresip can authenticate with it. In trusted-hosts add the IP address of the server where you will run go2rtc. This makes sure we don’t need to bother with the initial authentication of username/password. In my case with Home Assistant OS and go2rtc installed as addon, I added the IP of Home Assistant instance:
+
+```
+[global]
+...
+
+[module::Authentication]
+enabled=true
+auth-domains=c300x.bs.iotleg.com
+db-implementation=file
+datasource=/etc/flexisip/users/users.db.txt
+trusted-hosts=127.0.0.1 192.168.0.XX
+hashed-passwords=true
+reject-wrong-client-certificates=true
+```
+
+Now we will add a user agent (user) that will be used by plugin to register itself with flexisip: Edit the /etc/flexisip/users/users.db.txt file and create a new line by copy/pasting the user:
+For example:
+```
+c300x@1234567.bs.iotleg.com md5:ffffffffffffffffffffffffffffffff ;
+webrtc@1234567.bs.iotleg.com md5:ffffffffffffffffffffffffffffffff ;
+```
+
+Change c300x user strings with c100x, in case of C100X doorbell.
+
+You can take the data after "c300x", "c100x" and "webrtc" user from another line alredy present in than file.
+
+Edit the /etc/flexisip/users/route.conf file and add a new line to it, it specifies where this user can be found on the network. Change the IP address to the place where you will run go2rtc (same as trusted-hosts above):
+```
+<sip:webrtc@1234567.bs.iotleg.com> <sip:192.168.0.XX>
+```
+
+Edit the /etc/flexisip/users/route_int.conf file. This file contains one line that starts with <sip:alluser@... it specifies who will be called when someone rings the doorbell. You can look at it as a group of users that is called when you call alluser@1234567.bs.iotleg.com. Add your username at the end (make sure you stay on the same line, NOT a new line!)
+
+```
+<sip:alluser@1234567.bs.iotleg.com> ..., <sip:webrtc@1234567.bs.iotleg.com>
+```
+
+Reboot and verify flexisip is listening on the new IP address.
+
+```
+~# ps aux|grep flexis
+bticino    741  0.0  0.3   9732  1988 ?        SNs  Oct28   0:00 /usr/bin/flexisip --daemon --syslog --pidfile /var/run/flexisip.pid --p12-passphrase-file /var/tmp/bt_answering_machine.fifo --transports sips:192.168.0.XX:5061;maddr=192.168.0.XX;require-peer-certificate=1 sip:127.0.0.1;maddr=127.0.0.1 sip:192.168.0.XX;maddr=192.168.0.XX
+bticino    742  0.1  1.6  45684  8408 ?        SNl  Oct28   1:44 /usr/bin/flexisip --daemon --syslog --pidfile /var/run/flexisip.pid --p12-passphrase-file /var/tmp/bt_answering_machine.fifo --transports sips:192.168.0.XX:5061;maddr=192.168.0.XX;require-peer-certificate=1 sip:127.0.0.1;maddr=127.0.0.1 sip:192.168.0.XX;maddr=192.168.0.XX
+```
 
 ## Homekit
 
