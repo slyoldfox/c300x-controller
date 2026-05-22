@@ -9,6 +9,8 @@
     },
     "mqtt_config": {
         "enabled" : true,
-        "host": "192.168.0.2"
+        "host": "192.168.0.2",
+        "enable_smartphone_forwarding_command": false,
+        "smartphone_forwarding_command_topic": "bticino/smartphone_forwarding/set"
     }
 }

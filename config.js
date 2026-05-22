@@ -40,7 +40,13 @@ const mqtt_config = {
     // If retain is true, the message will be retained as a "last known good" value on the broker
     'retain': false,
     // Path of mosquitto_pub on the intercom
-    'exec_path': '/usr/bin/mosquitto_pub'
+    'exec_path': '/usr/bin/mosquitto_pub',
+    // Optional command listener. Keep this disabled unless you want MQTT writes.
+    'enable_smartphone_forwarding_command': false,
+    // Defaults to '<topic>/smartphone_forwarding/set' when left empty
+    'smartphone_forwarding_command_topic': '',
+    // Path of mosquitto_sub on the intercom
+    'sub_exec_path': '/usr/bin/mosquitto_sub'
 }
 
 const sip = {
