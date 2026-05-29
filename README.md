@@ -31,6 +31,7 @@ Supports:
 * Register endpoints to receive doorbell pressed, door locked and door unlocked events
 * Enable/disable voice mail and show the status
 * Enable/disable the ringer and show the status
+* Enable/block smartphone call forwarding and show the status
 * Start dropbear sshd (in case it crashes)
 * Validates scrypted setup
 * Exposes the voicemail videoclips
